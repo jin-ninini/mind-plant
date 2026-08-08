@@ -1,0 +1,37 @@
+{
+  "page": "home",
+  "concern_type": "habit",
+  "survey_answers": {
+    "cautious": 3,
+    "needs_support": 3,
+    "focus": 3,
+    "interest_oriented": 3,
+    "small_steps": 3
+  },
+  "free_text": "",
+  "recommendation": {
+    "personality_summary": "자신의 속도를 소중히 여기며, 차근차근 꾸준하게 나아가는 것을 선호하는 신중한 성격이에요.",
+    "concern_summary": "새로운 습관을 만들고 싶지만, 어디서부터 어떻게 시작해야 할지 고민이 되는군요.",
+    "plant_name": "바질",
+    "plant_id": "basil",
+    "plant_emoji": "🌿",
+    "plant_reason": "매일 조금씩 돌봐주면 향기가 짙어지는 바질처럼, 작은 습관을 꾸준히 쌓아가는 당신의 성향과 잘 어울려요.",
+    "plant_symbol": "생활력, 성실함, 성장",
+    "starter_goals": [
+      "같은 시간에 공부 15분 시작하기",
+      "할 일 체크박스 3개 만들기",
+      "잠들기 전 내일 목표 1개 정하기"
+    ],
+    "message": "작은 시작이 모여 큰 변화를 만들 거예요. 오늘부터 바질과 함께 기분 좋은 루틴을 하나씩 만들어 봐요!"
+  },
+  "completed_count": 3,
+  "today_goal": "",
+  "last_encouragement": "오늘도 꾸준히 한 걸음씩 나아간 당신이 정말 자랑스러워요. 지금처럼 정성껏 마음을 돌보다 보면 분명 더 멋지게 피어날 거예요.",
+  "goal_history": [],
+  "chat_history": [
+    {
+      "role": "assistant",
+      "content": "안녕, 나는 바질이야. 너의 습관 고민 흐름을 기억하고 있어. 목표 추천이 필요하면 '오늘 목표 추천해줘'라고 말해줘."
+    }
+  ]
+}
