@@ -1,6 +1,7 @@
 {
   "page": "home",
   "concern_type": "habit",
+  "custom_concern_text": "",
   "survey_answers": {
     "cautious": 3,
     "needs_support": 3,
@@ -8,30 +9,60 @@
     "interest_oriented": 3,
     "small_steps": 3
   },
-  "free_text": "",
+  "free_text": "ㅁㅇㄻ",
   "recommendation": {
-    "personality_summary": "자신의 속도를 소중히 여기며, 차근차근 꾸준하게 나아가는 것을 선호하는 신중한 성격이에요.",
-    "concern_summary": "새로운 습관을 만들고 싶지만, 어디서부터 어떻게 시작해야 할지 고민이 되는군요.",
-    "plant_name": "바질",
-    "plant_id": "basil",
-    "plant_emoji": "🌿",
-    "plant_reason": "매일 조금씩 돌봐주면 향기가 짙어지는 바질처럼, 작은 습관을 꾸준히 쌓아가는 당신의 성향과 잘 어울려요.",
-    "plant_symbol": "생활력, 성실함, 성장",
+    "personality_summary": "자신의 속도로 차근차근 실천을 이어갈 수 있는 성향",
+    "concern_summary": "목표를 꾸준히 이어가는 습관 만들기가 고민이에요.",
+    "plant_name": "라벤더",
+    "plant_id": "lavender",
+    "plant_emoji": "💜",
+    "plant_reason": "라벤더의 상징인 치유, 신념, 평온이(가) 지금의 고민을 작은 실천으로 바꾸는 데 잘 맞아요.",
+    "plant_symbol": "치유, 신념, 평온",
     "starter_goals": [
-      "같은 시간에 공부 15분 시작하기",
-      "할 일 체크박스 3개 만들기",
-      "잠들기 전 내일 목표 1개 정하기"
+      "시작 전 깊게 숨 3번 쉬기",
+      "오늘 해야 할 일 2개만 적기",
+      "공부 후 스스로에게 한 줄 칭찬 남기기"
     ],
-    "message": "작은 시작이 모여 큰 변화를 만들 거예요. 오늘부터 바질과 함께 기분 좋은 루틴을 하나씩 만들어 봐요!"
+    "message": "오늘의 작은 실천이 내일의 자신감을 키워줘요. 지금 한 걸음만 시작해봐요."
   },
-  "completed_count": 3,
+  "completed_count": 0,
   "today_goal": "",
-  "last_encouragement": "오늘도 꾸준히 한 걸음씩 나아간 당신이 정말 자랑스러워요. 지금처럼 정성껏 마음을 돌보다 보면 분명 더 멋지게 피어날 거예요.",
+  "last_encouragement": "오늘의 작은 실천이 내일의 자신감을 키워줘요. 지금 한 걸음만 시작해봐요.",
   "goal_history": [],
   "chat_history": [
     {
       "role": "assistant",
-      "content": "안녕, 나는 바질이야. 너의 습관 고민 흐름을 기억하고 있어. 목표 추천이 필요하면 '오늘 목표 추천해줘'라고 말해줘."
+      "content": "안녕, 나는 라벤더이야. 너의 습관 고민 흐름을 기억하고 있어. 목표 추천이 필요하면 '오늘 목표 추천해줘'라고 말해줘."
+    },
+    {
+      "role": "user",
+      "content": "수학 문제 추천해줘"
+    },
+    {
+      "role": "assistant",
+      "content": "라벤더 기준으로 지금은 '시작 전 깊게 숨 3번 쉬기'을(를) 먼저 해보는 게 좋아요. 끝나면 바로 완료 눌러서 성장시켜봐요."
+    },
+    {
+      "role": "user",
+      "content": "수학 문제 풀어야해"
+    },
+    {
+      "role": "assistant",
+      "content": "지금은 습관 고민 흐름이고 성향은 균형형에 가까워요. 현재는 완료 0회이니 오늘 목표로 '시작 전 깊게 숨 3번 쉬기'을(를) 추천할게요."
     }
-  ]
+  ],
+  "pending_goal_text": "",
+  "pending_reflection_text": "",
+  "pending_worry_text": "",
+  "watering_progress": 0,
+  "watering_splash_visible": false,
+  "watering_can_filled": false,
+  "watering_warning_message": "",
+  "mbti_answers": {
+    "ei": "E",
+    "sn": "S",
+    "tf": "T",
+    "jp": "J"
+  },
+  "mbti_type": "ESTJ"
 }
