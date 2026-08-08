@@ -1,0 +1,610 @@
+[
+  {
+    "id": "fiddle_leaf_fig",
+    "name": "떡갈고무나무",
+    "scientific_name": "Ficus lyrata",
+    "emoji": "🎻",
+    "mbti": "INTJ",
+    "mbti_group": "분석형",
+    "mbti_nickname": "용의주도한 전략가",
+    "keywords": ["전략", "구조", "효율", "독립"],
+    "concern_types": ["career", "focus"],
+    "personality_fit": "복잡한 관계보다 뚜렷한 구조와 효율적인 계획을 좋아하는 사용자",
+    "symbol": "통찰, 효율, 자립",
+    "description": "혼자서도 뚜렷한 형태로 자라는 떡갈고무나무처럼, 세운 전략을 흔들림 없이 실행하도록 도와줘요.",
+    "starter_goals": [
+      "이번 주 목표를 3단계 계획으로 적어보기",
+      "가장 효율적인 공부 순서 정하기",
+      "하루 끝에 계획 대비 실행률 체크하기"
+    ]
+  },
+  {
+    "id": "bird_of_paradise",
+    "name": "극락조화",
+    "scientific_name": "Strelitzia reginae",
+    "emoji": "🐦",
+    "mbti": "INTJ",
+    "mbti_group": "분석형",
+    "mbti_nickname": "용의주도한 전략가",
+    "keywords": ["개성", "확신", "비전", "특별함"],
+    "concern_types": ["career", "focus"],
+    "personality_fit": "남들과 다른 자신만의 비전을 확신 있게 밀고 나가고 싶은 사용자",
+    "symbol": "비전, 확신, 특별함",
+    "description": "새의 머리를 닮은 이국적인 꽃을 피우는 극락조화처럼, 남들과 다른 나만의 비전을 당당하게 펼쳐가게 도와줘요.",
+    "starter_goals": [
+      "남과 다른 나만의 강점 1개 적어보기",
+      "오늘 계획에서 가장 중요한 목표 하나 정하기",
+      "막연한 생각을 구체적인 문장으로 정리하기"
+    ]
+  },
+  {
+    "id": "peacock_plant",
+    "name": "칼라데아 마코야나",
+    "scientific_name": "Calathea makoyana",
+    "emoji": "🦚",
+    "mbti": "INTP",
+    "mbti_group": "분석형",
+    "mbti_nickname": "논리적인 사색가",
+    "keywords": ["호기심", "관찰", "탐구", "분석"],
+    "concern_types": ["focus"],
+    "personality_fit": "정해진 틀보다 스스로 원리를 파고들며 관찰하고 탐구하는 걸 좋아하는 사용자",
+    "symbol": "탐구, 관찰, 인내",
+    "description": "낮과 밤에 잎을 펼쳤다 오므리는 칼라데아처럼, 궁금한 걸 끝까지 관찰하고 파고드는 힘을 키워줘요.",
+    "starter_goals": [
+      "궁금했던 개념 1개 깊게 조사해보기",
+      "오늘 배운 것 중 원리 1개 설명해보기",
+      "막힌 문제를 다른 방법으로 다시 풀어보기"
+    ]
+  },
+  {
+    "id": "pitcher_plant",
+    "name": "네펜데스",
+    "scientific_name": "Nepenthes spp.",
+    "emoji": "🫙",
+    "mbti": "INTP",
+    "mbti_group": "분석형",
+    "mbti_nickname": "논리적인 사색가",
+    "keywords": ["실험", "호기심", "독창성", "관찰"],
+    "concern_types": ["focus"],
+    "personality_fit": "남들이 신경 쓰지 않는 신기한 원리에 몰입하는 걸 좋아하는 사용자",
+    "symbol": "독창성, 실험정신, 몰입",
+    "description": "특이한 방식으로 벌레를 소화시키는 네펜데스처럼, 남들과 다른 방식으로 문제를 풀어가는 힘을 키워줘요.",
+    "starter_goals": [
+      "오늘 배운 것을 나만의 방식으로 정리해보기",
+      "호기심 생긴 주제 1개 더 찾아보기",
+      "같은 문제를 다른 관점으로 다시 풀어보기"
+    ]
+  },
+  {
+    "id": "travellers_palm",
+    "name": "여인초",
+    "scientific_name": "Ravenala madagascariensis",
+    "emoji": "🌴",
+    "mbti": "ENTJ",
+    "mbti_group": "분석형",
+    "mbti_nickname": "대담한 통솔자",
+    "keywords": ["리더십", "목표", "추진력", "성장"],
+    "concern_types": ["career"],
+    "personality_fit": "뚜렷한 목표를 세우고 앞장서서 크게 성장하고 싶은 사용자",
+    "symbol": "리더십, 품격, 추진력",
+    "description": "시원하게 잎을 펼치며 웅장하게 자라는 여인초처럼, 흔들리지 않는 리더십으로 목표를 이끌어가게 도와줘요.",
+    "starter_goals": [
+      "이번 목표의 최종 완성 모습 적어보기",
+      "친구에게 계획 한 가지 공유해보기",
+      "오늘의 우선순위 1위 정하고 먼저 처리하기"
+    ]
+  },
+  {
+    "id": "ficus_umbellata",
+    "name": "휘커스 움베르타",
+    "scientific_name": "Ficus umbellata",
+    "emoji": "💚",
+    "mbti": "ENTJ",
+    "mbti_group": "분석형",
+    "mbti_nickname": "대담한 통솔자",
+    "keywords": ["성장", "속도", "확신", "리더십"],
+    "concern_types": ["career"],
+    "personality_fit": "빠른 속도로 성장하며 눈에 보이는 결과를 만들고 싶은 사용자",
+    "symbol": "성장속도, 확신, 존재감",
+    "description": "빠르게 자라 존재감을 키우는 휘커스 움베르타처럼, 목표를 향해 속도감 있게 성장해가게 도와줘요.",
+    "starter_goals": [
+      "이번 주 성장 지표 1개 정하기",
+      "오늘 가장 빠르게 끝낼 수 있는 일부터 처리하기",
+      "일주일 전과 달라진 점 1개 확인하기"
+    ]
+  },
+  {
+    "id": "mimosa",
+    "name": "미모사",
+    "scientific_name": "Mimosa pudica",
+    "emoji": "🌾",
+    "mbti": "ENTP",
+    "mbti_group": "분석형",
+    "mbti_nickname": "뜨거운 논쟁을 즐기는 변론가",
+    "keywords": ["호기심", "실험", "즉흥", "재치"],
+    "concern_types": ["focus", "career"],
+    "personality_fit": "새롭고 예상치 못한 것에 흥미를 느끼며 다양한 시도를 해보고 싶은 사용자",
+    "symbol": "재치, 반응, 즉흥",
+    "description": "건드리면 순식간에 잎을 오므리는 미모사처럼, 새로운 자극에 빠르게 반응하며 몰입하게 도와줘요.",
+    "starter_goals": [
+      "새로운 방법으로 문제 1개 풀어보기",
+      "오늘 떠오른 아이디어 1개 메모하기",
+      "집중 20분을 실험하듯 시도해보기"
+    ]
+  },
+  {
+    "id": "avocado",
+    "name": "아보카도",
+    "scientific_name": "Persea americana",
+    "emoji": "🥑",
+    "mbti": "ENTP",
+    "mbti_group": "분석형",
+    "mbti_nickname": "뜨거운 논쟁을 즐기는 변론가",
+    "keywords": ["실험", "도전", "재미", "가능성"],
+    "concern_types": ["career", "focus"],
+    "personality_fit": "결과가 정해지지 않은 실험적인 시도 자체를 즐기는 사용자",
+    "symbol": "가능성, 실험, 재미",
+    "description": "씨앗부터 직접 키워내는 아보카도처럼, 결과를 몰라도 일단 시도해보는 즐거움을 알려줘요.",
+    "starter_goals": [
+      "해보고 싶었던 것 1개 그냥 시작해보기",
+      "실패해도 되는 작은 실험 1개 해보기",
+      "오늘 시도한 것의 결과를 기록해두기"
+    ]
+  },
+  {
+    "id": "lavender",
+    "name": "라벤더",
+    "scientific_name": "Lavandula angustifolia",
+    "emoji": "💜",
+    "mbti": "INFJ",
+    "mbti_group": "외교형",
+    "mbti_nickname": "선의의 옹호자",
+    "keywords": ["안정", "치유", "신념", "섬세함"],
+    "concern_types": ["focus", "habit"],
+    "personality_fit": "깊이 공감하면서도 자신만의 신념을 조용히 지키고 싶은 사용자",
+    "symbol": "치유, 신념, 평온",
+    "description": "마음을 차분하게 가라앉히는 라벤더 향처럼, 내 신념을 조용히 그러나 단단하게 키워가게 도와줘요.",
+    "starter_goals": [
+      "시작 전 깊게 숨 3번 쉬기",
+      "오늘 해야 할 일 2개만 적기",
+      "공부 후 스스로에게 한 줄 칭찬 남기기"
+    ]
+  },
+  {
+    "id": "jasmine",
+    "name": "자스민",
+    "scientific_name": "Jasminum polyanthum",
+    "emoji": "🌙",
+    "mbti": "INFJ",
+    "mbti_group": "외교형",
+    "mbti_nickname": "선의의 옹호자",
+    "keywords": ["신비", "깊이", "위로", "향기"],
+    "concern_types": ["focus", "habit"],
+    "personality_fit": "은은하지만 깊은 울림이 있는 방식으로 마음을 돌보고 싶은 사용자",
+    "symbol": "신비, 위로, 깊이",
+    "description": "은은하게 퍼지는 향으로 마음을 감싸주는 자스민처럼, 조용하지만 깊은 위로로 하루를 다독여줘요.",
+    "starter_goals": [
+      "오늘 마음을 편하게 해준 순간 하나 떠올리기",
+      "혼자만의 조용한 시간 10분 갖기",
+      "내일 나에게 해주고 싶은 말 한 줄 적기"
+    ]
+  },
+  {
+    "id": "babys_breath",
+    "name": "안개꽃",
+    "scientific_name": "Gypsophila elegans",
+    "emoji": "🤍",
+    "mbti": "INFP",
+    "mbti_group": "외교형",
+    "mbti_nickname": "열정적인 중재자",
+    "keywords": ["감성", "상상력", "순수함", "섬세함"],
+    "concern_types": ["career", "focus"],
+    "personality_fit": "섬세한 감성과 상상력으로 나만의 의미를 찾고 싶은 사용자",
+    "symbol": "순수함, 상상력, 조화",
+    "description": "다른 꽃과 함께 있을 때 더 빛나는 안개꽃처럼, 작은 순간에도 의미를 찾아가며 나만의 방향을 그리게 도와줘요.",
+    "starter_goals": [
+      "관심 있는 것 1개 자유롭게 적어보기",
+      "오늘 느낀 감정 한 줄로 표현하기",
+      "작은 목표 하나를 나만의 방식으로 시도하기"
+    ]
+  },
+  {
+    "id": "eucalyptus",
+    "name": "유칼립투스",
+    "scientific_name": "Eucalyptus globulus",
+    "emoji": "🍃",
+    "mbti": "INFP",
+    "mbti_group": "외교형",
+    "mbti_nickname": "열정적인 중재자",
+    "keywords": ["상쾌함", "여유", "치유", "개성"],
+    "concern_types": ["focus", "habit"],
+    "personality_fit": "복잡한 마음을 환기하며 나만의 속도를 찾고 싶은 사용자",
+    "symbol": "상쾌함, 치유, 여유",
+    "description": "은빛 잎에서 상쾌한 향이 퍼지는 유칼립투스처럼, 지친 마음을 가볍게 환기시켜줘요.",
+    "starter_goals": [
+      "창문 열고 3분 환기하기",
+      "오늘 하루 중 가장 힘들었던 생각 하나 흘려보내기",
+      "가벼운 산책 5분 다녀오기"
+    ]
+  },
+  {
+    "id": "pothos",
+    "name": "스킨답서스",
+    "scientific_name": "Epipremnum aureum",
+    "emoji": "🌿",
+    "mbti": "ENFJ",
+    "mbti_group": "외교형",
+    "mbti_nickname": "정의로운 사회운동가",
+    "keywords": ["배려", "성장", "나눔", "협력"],
+    "concern_types": ["career", "habit"],
+    "personality_fit": "주변 사람을 챙기고 함께 성장하며 나누는 걸 좋아하는 사용자",
+    "symbol": "배려, 나눔, 성장",
+    "description": "물꽂이로도 쉽게 번져나가는 스킨답서스처럼, 나의 성장을 주변과 나누며 함께 자라게 도와줘요.",
+    "starter_goals": [
+      "오늘 누군가를 응원하는 말 한마디 건네기",
+      "같이할 작은 목표 하나 정하기",
+      "도움받은 일 하나 떠올려 감사 표현하기"
+    ]
+  },
+  {
+    "id": "spider_plant",
+    "name": "접란",
+    "scientific_name": "Chlorophytum comosum",
+    "emoji": "🍀",
+    "mbti": "ENFJ",
+    "mbti_group": "외교형",
+    "mbti_nickname": "정의로운 사회운동가",
+    "keywords": ["나눔", "번식", "다정함", "성장"],
+    "concern_types": ["career", "habit"],
+    "personality_fit": "내가 배운 것을 주변에 나누며 함께 성장하고 싶은 사용자",
+    "symbol": "나눔, 번식력, 다정함",
+    "description": "새끼 포기를 계속 만들어내는 접란처럼, 내가 이룬 성장을 주변에도 나누어주게 도와줘요.",
+    "starter_goals": [
+      "오늘 배운 것 1개를 다른 사람에게 알려주기",
+      "함께하고 싶은 사람 1명 떠올려 연락하기",
+      "작은 성취 하나 주변에 공유하기"
+    ]
+  },
+  {
+    "id": "sunflower",
+    "name": "해바라기",
+    "scientific_name": "Helianthus annuus",
+    "emoji": "🌻",
+    "mbti": "ENFP",
+    "mbti_group": "외교형",
+    "mbti_nickname": "재기발랄한 활동가",
+    "keywords": ["진로", "방향", "희망", "활력"],
+    "concern_types": ["career"],
+    "personality_fit": "밝은 에너지로 다양한 것에 도전하며 방향을 찾고 싶은 사용자",
+    "symbol": "방향성, 희망, 활력",
+    "description": "빛을 향해 고개를 돌리는 해바라기처럼, 너의 진로 방향을 긍정적으로 찾도록 응원하는 식물 친구예요.",
+    "starter_goals": [
+      "관심 있는 직업 1개 찾아보기",
+      "좋아하는 과목이나 활동 3개 적어보기",
+      "진로 관련 짧은 영상 10분 보기"
+    ]
+  },
+  {
+    "id": "cosmos",
+    "name": "코스모스",
+    "scientific_name": "Cosmos bipinnatus",
+    "emoji": "🎐",
+    "mbti": "ENFP",
+    "mbti_group": "외교형",
+    "mbti_nickname": "재기발랄한 활동가",
+    "keywords": ["자유", "다양성", "호기심", "활력"],
+    "concern_types": ["career", "focus"],
+    "personality_fit": "여러 관심사를 자유롭게 오가며 나만의 방향을 찾고 싶은 사용자",
+    "symbol": "자유, 다양성, 활력",
+    "description": "바람에 자유롭게 흔들리는 코스모스처럼, 다양한 관심사 속에서 나만의 리듬을 찾아가게 도와줘요.",
+    "starter_goals": [
+      "오늘 끌리는 활동 아무거나 10분 해보기",
+      "관심사 목록에 새로운 것 1개 추가하기",
+      "오늘의 기분을 색깔로 표현해보기"
+    ]
+  },
+  {
+    "id": "rosemary",
+    "name": "로즈마리",
+    "scientific_name": "Rosmarinus officinalis",
+    "emoji": "🌱",
+    "mbti": "ISTJ",
+    "mbti_group": "관리자형",
+    "mbti_nickname": "청렴결백한 논리주의자",
+    "keywords": ["루틴", "원칙", "실용", "꾸준함"],
+    "concern_types": ["habit"],
+    "personality_fit": "정해진 원칙과 루틴으로 꾸준히 실천하고 싶은 사용자",
+    "symbol": "성실함, 실용성, 꾸준함",
+    "description": "향긋한 향을 꾸준히 내어주는 로즈마리처럼, 작은 반복을 쌓아 나만의 루틴을 만들어줘요.",
+    "starter_goals": [
+      "같은 시간에 공부 15분 시작하기",
+      "할 일 체크박스 3개 만들기",
+      "잠들기 전 내일 목표 1개 정하기"
+    ]
+  },
+  {
+    "id": "snake_plant",
+    "name": "산세비에리아",
+    "scientific_name": "Dracaena trifasciata",
+    "emoji": "🐍",
+    "mbti": "ISTJ",
+    "mbti_group": "관리자형",
+    "mbti_nickname": "청렴결백한 논리주의자",
+    "keywords": ["원칙", "꾸준함", "안정", "관리"],
+    "concern_types": ["habit"],
+    "personality_fit": "복잡한 관리 없이도 꾸준히 결과를 유지하고 싶은 사용자",
+    "symbol": "안정, 원칙, 지속력",
+    "description": "손이 적게 가도 오래 튼튼하게 자라는 산세비에리아처럼, 정해진 루틴을 오래 지속하는 힘을 키워줘요.",
+    "starter_goals": [
+      "매일 같은 시간에 할 일 1개 반복하기",
+      "이번 주 지킨 규칙 1개 기록하기",
+      "할 일을 미루지 않고 바로 처리하기"
+    ]
+  },
+  {
+    "id": "geranium",
+    "name": "제라늄",
+    "scientific_name": "Pelargonium inquinans",
+    "emoji": "🌸",
+    "mbti": "ISFJ",
+    "mbti_group": "관리자형",
+    "mbti_nickname": "용감한 수호자",
+    "keywords": ["안정", "보살핌", "다정함", "꾸준함"],
+    "concern_types": ["focus", "habit"],
+    "personality_fit": "다른 사람을 챙기듯 꾸준한 정성으로 돌보고 싶은 사용자",
+    "symbol": "다정함, 보살핌, 안정",
+    "description": "화사한 꽃으로 정성에 보답하는 제라늄처럼, 꾸준한 돌봄으로 마음의 안정을 찾아가게 도와줘요.",
+    "starter_goals": [
+      "시작 전 깊게 숨 3번 쉬기",
+      "오늘 해야 할 일 2개만 적기",
+      "공부 후 스스로에게 한 줄 칭찬 남기기"
+    ]
+  },
+  {
+    "id": "ivy",
+    "name": "아이비",
+    "scientific_name": "Hedera helix",
+    "emoji": "🪢",
+    "mbti": "ISFJ",
+    "mbti_group": "관리자형",
+    "mbti_nickname": "용감한 수호자",
+    "keywords": ["보살핌", "적응력", "다정함", "꾸준함"],
+    "concern_types": ["focus", "habit"],
+    "personality_fit": "주변 상황에 유연하게 적응하며 꾸준히 돌보는 걸 좋아하는 사용자",
+    "symbol": "적응력, 다정함, 생명력",
+    "description": "어디에서든 잘 뻗어나가는 아이비처럼, 어떤 상황에서도 꾸준히 나만의 루틴을 이어가게 도와줘요.",
+    "starter_goals": [
+      "오늘 할 일을 상황에 맞게 조정해보기",
+      "작은 변화에도 하루 루틴 지켜보기",
+      "힘들었던 순간 유연하게 넘긴 경험 떠올리기"
+    ]
+  },
+  {
+    "id": "zz_plant",
+    "name": "금전수",
+    "scientific_name": "Zamioculcas zamiifolia",
+    "emoji": "💰",
+    "mbti": "ESTJ",
+    "mbti_group": "관리자형",
+    "mbti_nickname": "엄격한 관리자",
+    "keywords": ["체계", "성실", "관리", "결과"],
+    "concern_types": ["habit", "career"],
+    "personality_fit": "체계적인 계획을 세우고 확실한 결과를 만들어내고 싶은 사용자",
+    "symbol": "체계, 안정감, 실행력",
+    "description": "관리가 쉬우면서도 꾸준히 자라는 금전수처럼, 세운 규칙을 흔들림 없이 지켜 결과를 만들어가게 도와줘요.",
+    "starter_goals": [
+      "오늘 할 일을 체크리스트로 정리하기",
+      "계획한 시간에 정확히 시작하기",
+      "하루 마무리에 완료율 기록하기"
+    ]
+  },
+  {
+    "id": "banyan_tree",
+    "name": "벵골고무나무",
+    "scientific_name": "Ficus benghalensis",
+    "emoji": "🌳",
+    "mbti": "ESTJ",
+    "mbti_group": "관리자형",
+    "mbti_nickname": "엄격한 관리자",
+    "keywords": ["안정감", "성과", "신뢰", "관리"],
+    "concern_types": ["habit", "career"],
+    "personality_fit": "확실한 성과와 신뢰를 바탕으로 안정적으로 성장하고 싶은 사용자",
+    "symbol": "신뢰, 안정감, 성과",
+    "description": "넓은 잎으로 시원한 그늘을 만드는 벵골고무나무처럼, 꾸준한 관리로 믿을 수 있는 결과를 만들어가게 도와줘요.",
+    "starter_goals": [
+      "오늘 목표 대비 진행 상황 점검하기",
+      "약속한 일 하나 확실히 완료하기",
+      "이번 주 성과를 한 줄로 정리하기"
+    ]
+  },
+  {
+    "id": "hydrangea",
+    "name": "수국",
+    "scientific_name": "Hydrangea macrophylla",
+    "emoji": "💐",
+    "mbti": "ESFJ",
+    "mbti_group": "관리자형",
+    "mbti_nickname": "사교적인 외교관",
+    "keywords": ["친화력", "공유", "배려", "사교성"],
+    "concern_types": ["habit", "career"],
+    "personality_fit": "주변 사람들과 함께 나누고 어울리며 힘을 얻는 사용자",
+    "symbol": "친화력, 나눔, 다정함",
+    "description": "풍성하게 어우러져 피는 수국처럼, 함께하는 사람들과 목표를 나누며 힘을 얻게 도와줘요.",
+    "starter_goals": [
+      "오늘 목표를 친구와 함께 나눠보기",
+      "도와준 사람에게 고맙다고 말하기",
+      "함께 할 작은 약속 하나 정하기"
+    ]
+  },
+  {
+    "id": "begonia",
+    "name": "베고니아",
+    "scientific_name": "Begonia semperflorens",
+    "emoji": "🎀",
+    "mbti": "ESFJ",
+    "mbti_group": "관리자형",
+    "mbti_nickname": "사교적인 외교관",
+    "keywords": ["다정함", "다채로움", "사교성", "수집"],
+    "concern_types": ["habit", "career"],
+    "personality_fit": "다양한 사람, 다양한 취향을 챙기고 함께 나누는 걸 좋아하는 사용자",
+    "symbol": "다채로움, 사교성, 다정함",
+    "description": "여러 모양과 색으로 즐거움을 주는 베고니아처럼, 다양한 사람들과 어울리며 활력을 얻게 도와줘요.",
+    "starter_goals": [
+      "오늘 새로운 사람이나 정보 1개 알아보기",
+      "친구에게 안부 인사 건네기",
+      "좋아하는 것 목록에 1개 추가하기"
+    ]
+  },
+  {
+    "id": "stuckii",
+    "name": "스투키",
+    "scientific_name": "Dracaena angolensis",
+    "emoji": "🌵",
+    "mbti": "ISTP",
+    "mbti_group": "탐험가형",
+    "mbti_nickname": "만능 재주꾼",
+    "keywords": ["집중", "독립", "단단함", "방해 차단"],
+    "concern_types": ["focus", "habit"],
+    "personality_fit": "복잡한 관리 없이 스스로 짧고 강하게 집중하는 사용자",
+    "symbol": "인내, 독립, 단단함",
+    "description": "손이 많이 가지 않아도 단단하게 자라는 스투키처럼, 짧은 몰입을 반복해 집중 근육을 키우게 도와줘요.",
+    "starter_goals": [
+      "25분 타이머로 한 과제만 하기",
+      "집중 시간에 휴대폰 뒤집어 두기",
+      "끝난 뒤 5분 쉬고 다시 1회 반복하기"
+    ]
+  },
+  {
+    "id": "staghorn_fern",
+    "name": "박쥐란",
+    "scientific_name": "Platycerium bifurcatum",
+    "emoji": "🦌",
+    "mbti": "ISTP",
+    "mbti_group": "탐험가형",
+    "mbti_nickname": "만능 재주꾼",
+    "keywords": ["독립", "독특함", "실용", "적응"],
+    "concern_types": ["focus", "habit"],
+    "personality_fit": "정해진 방식 없이 스스로의 생존 방식을 찾고 싶은 사용자",
+    "symbol": "독립성, 적응력, 실용성",
+    "description": "벽에 붙어 스스로 자리를 잡는 박쥐란처럼, 나만의 방식으로 문제를 해결해나가게 도와줘요.",
+    "starter_goals": [
+      "오늘 문제를 나만의 방법으로 풀어보기",
+      "불필요한 과정 1개 줄여보기",
+      "혼자 집중할 수 있는 공간 만들기"
+    ]
+  },
+  {
+    "id": "calathea",
+    "name": "칼라데아",
+    "scientific_name": "Calathea orbifolia",
+    "emoji": "🎨",
+    "mbti": "ISFP",
+    "mbti_group": "탐험가형",
+    "mbti_nickname": "호기심 많은 예술가",
+    "keywords": ["감성", "섬세함", "개성", "심미"],
+    "concern_types": ["focus", "habit"],
+    "personality_fit": "자신만의 감성과 속도로 아름다움을 느끼고 싶은 사용자",
+    "symbol": "심미, 섬세함, 고유함",
+    "description": "화려한 잎 무늬가 예술 작품 같은 칼라데아처럼, 나만의 감성으로 조용히 몰입하게 도와줘요.",
+    "starter_goals": [
+      "오늘 마음에 든 것 하나 그리거나 적어보기",
+      "조용히 몰입할 수 있는 시간 20분 만들기",
+      "내 방식대로 해낸 일 하나 칭찬하기"
+    ]
+  },
+  {
+    "id": "prayer_plant",
+    "name": "마란타",
+    "scientific_name": "Maranta leuconeura",
+    "emoji": "🙏",
+    "mbti": "ISFP",
+    "mbti_group": "탐험가형",
+    "mbti_nickname": "호기심 많은 예술가",
+    "keywords": ["감성", "리듬", "평온", "고유함"],
+    "concern_types": ["focus", "habit"],
+    "personality_fit": "하루의 리듬에 따라 감정을 조용히 정리하고 싶은 사용자",
+    "symbol": "평온, 리듬, 감성",
+    "description": "밤이 되면 잎을 모으고 쉬는 마란타처럼, 하루를 마무리하며 마음을 가만히 정리하게 도와줘요.",
+    "starter_goals": [
+      "자기 전 오늘 하루 감정 한 줄 정리하기",
+      "좋아하는 것으로 5분 휴식하기",
+      "내일을 위한 조용한 준비 시간 갖기"
+    ]
+  },
+  {
+    "id": "monstera",
+    "name": "몬스테라",
+    "scientific_name": "Monstera deliciosa",
+    "emoji": "🪴",
+    "mbti": "ESTP",
+    "mbti_group": "탐험가형",
+    "mbti_nickname": "모험을 즐기는 사업가",
+    "keywords": ["자신감", "확장", "도전", "성장"],
+    "concern_types": ["career", "habit"],
+    "personality_fit": "새로운 도전을 해보고 싶지만 첫걸음이 망설여지는 사용자",
+    "symbol": "확장, 용기, 가능성",
+    "description": "크게 잎을 펼치는 몬스테라처럼, 작은 도전을 통해 자신감의 범위를 넓히게 도와줘요.",
+    "starter_goals": [
+      "해보고 싶던 활동 1개 신청해보기",
+      "오늘의 도전 목표를 친구에게 말해보기",
+      "실패해도 배운 점 1개 기록하기"
+    ]
+  },
+  {
+    "id": "venus_flytrap",
+    "name": "파리지옥",
+    "scientific_name": "Dionaea muscipula",
+    "emoji": "🪤",
+    "mbti": "ESTP",
+    "mbti_group": "탐험가형",
+    "mbti_nickname": "모험을 즐기는 사업가",
+    "keywords": ["즉흥", "자극", "스릴", "실행력"],
+    "concern_types": ["focus", "career"],
+    "personality_fit": "즉각적인 반응과 스릴 있는 도전에서 동기를 얻는 사용자",
+    "symbol": "즉흥성, 실행력, 스릴",
+    "description": "순식간에 반응해 먹이를 잡는 파리지옥처럼, 기회가 왔을 때 망설이지 않고 바로 행동하게 도와줘요.",
+    "starter_goals": [
+      "미루던 일 1개 지금 바로 시작하기",
+      "오늘의 도전 과제 1개 정하고 즉시 실행하기",
+      "결과가 나오면 바로 다음 행동 정하기"
+    ]
+  },
+  {
+    "id": "hibiscus",
+    "name": "히비스커스",
+    "scientific_name": "Hibiscus rosa-sinensis",
+    "emoji": "🌺",
+    "mbti": "ESFP",
+    "mbti_group": "탐험가형",
+    "mbti_nickname": "자유로운 영혼의 연예인",
+    "keywords": ["즉흥", "활력", "사교성", "표현력"],
+    "concern_types": ["focus", "career"],
+    "personality_fit": "매 순간을 즐기며 자신을 자유롭게 표현하고 싶은 사용자",
+    "symbol": "활력, 표현력, 즉흥성",
+    "description": "열대의 분위기를 물씬 풍기는 히비스커스처럼, 하루하루를 화려한 활력으로 채워가게 도와줘요.",
+    "starter_goals": [
+      "오늘의 기분을 한 문장으로 표현해보기",
+      "좋아하는 활동으로 5분 워밍업하기",
+      "오늘 있었던 좋은 일 하나 자랑해보기"
+    ]
+  },
+  {
+    "id": "china_aster",
+    "name": "과꽃",
+    "scientific_name": "Callistephus chinensis",
+    "emoji": "🌈",
+    "mbti": "ESFP",
+    "mbti_group": "탐험가형",
+    "mbti_nickname": "자유로운 영혼의 연예인",
+    "keywords": ["표현력", "다채로움", "사교성", "활력"],
+    "concern_types": ["focus", "career"],
+    "personality_fit": "다채로운 매력으로 주변 분위기를 밝게 만들고 싶은 사용자",
+    "symbol": "다채로움, 활력, 표현력",
+    "description": "가을 정원을 화사하게 수놓는 과꽃처럼, 하루하루를 다채로운 색으로 채워가게 도와줘요.",
+    "starter_goals": [
+      "오늘 기분을 표현하는 노래나 색 고르기",
+      "주변 사람과 즐거운 이야기 나누기",
+      "새로운 스타일 하나 시도해보기"
+    ]
+  }
+]
