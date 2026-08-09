@@ -121,12 +121,14 @@ mindplant/
 
 ### 주요 파일
 
+### 주요 파일
+
 | 파일                    | 설명                          |
 | --------------------- | --------------------------- |
 | `src/app.py`          | Streamlit UI 및 전체 애플리케이션 흐름 |
 | `src/ai.py`           | AI 추천, 챗봇 응답 생성 및 LLM 호출    |
 | `src/growth.py`       | 식물 성장 단계 계산                 |
-| `src/storage.py`      | 사용자 데이터 저장 및 불러오기           |
+| `src/storage.py`      | 사용자 데이터 저장 및 불러오기 유틸리티(세션 간 상태 공유 문제를 막기 위해 현재 `app.py`에서는 사용하지 않으며, 상태는 `st.session_state`에만 보관됩니다) |
 | `data/plants.json`    | 식물 메타데이터 및 추천 기준            |
 | `data/demo_user.json` | 데모 사용자 데이터                  |
 | `assets/plants/`      | 식물 및 성장 단계 이미지              |

@@ -12,7 +12,6 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from growth import build_plant_state, get_growth_progress, get_growth_stage, get_next_stage_preview
-from storage import load_user_data, reset_user_data, save_user_data
 
 load_dotenv()
 
@@ -28,7 +27,6 @@ if os.environ.get("MINDPLANT_TERMINAL_HELP_SHOWN") != "1":
     print("")
     os.environ["MINDPLANT_TERMINAL_HELP_SHOWN"] = "1"
 
-DATA_PATH = "data/demo_user.json"
 PLANTS_PATH = "data/plants.json"
 AVATAR_DIR = Path(__file__).resolve().parent.parent / "assets" / "plants"
 
@@ -844,30 +842,10 @@ def _render_chat_card(chat_log_html: str, trigger: int = 0) -> None:
 
 
 def _persist_state() -> None:
-    payload = {
-        "page": st.session_state.page,
-        "concern_type": st.session_state.concern_type,
-        "custom_concern_text": st.session_state.custom_concern_text,
-        "survey_answers": st.session_state.survey_answers,
-        "free_text": st.session_state.free_text,
-        "recommendation": st.session_state.recommendation,
-        "completed_count": st.session_state.completed_count,
-        "today_goal": st.session_state.today_goal,
-        "today_goal_options": st.session_state.today_goal_options,
-        "last_encouragement": st.session_state.last_encouragement,
-        "goal_history": st.session_state.goal_history,
-        "chat_history": st.session_state.chat_history,
-        "pending_goal_text": st.session_state.pending_goal_text,
-        "pending_reflection_text": st.session_state.pending_reflection_text,
-        "pending_worry_text": st.session_state.pending_worry_text,
-        "watering_progress": st.session_state.watering_progress,
-        "watering_splash_visible": st.session_state.watering_splash_visible,
-        "watering_can_filled": st.session_state.watering_can_filled,
-        "watering_warning_message": st.session_state.watering_warning_message,
-        "mbti_answers": st.session_state.mbti_answers,
-        "mbti_type": st.session_state.mbti_type,
-    }
-    save_user_data(payload, DATA_PATH)
+    # 상태는 st.session_state에만 보관합니다(브라우저 세션마다 독립적).
+    # 과거에는 공용 파일(data/demo_user.json)에 저장해 모든 방문자가 같은 상태를
+    # 공유하는 문제가 있었기 때문에 파일 기반 저장을 사용하지 않습니다.
+    return
 
 
 def _default_survey_answers() -> dict[str, int]:
@@ -924,7 +902,6 @@ def _reset_journey_state(next_page: str = "concern", clear_mbti: bool = False) -
 
 
 def _reset_all_state() -> None:
-    reset_user_data(DATA_PATH)
     _reset_journey_state(next_page="start", clear_mbti=True)
 
 
@@ -932,7 +909,8 @@ def _init_state() -> None:
     if st.session_state.get("_initialized"):
         return
 
-    loaded = load_user_data(DATA_PATH)
+    # 새 방문자는 항상 빈 기본값에서 시작합니다(다른 사용자의 상태를 불러오지 않음).
+    loaded: dict[str, Any] = {}
 
     st.session_state.page = loaded.get("page", "start")
     st.session_state.concern_type = loaded.get("concern_type", "")
