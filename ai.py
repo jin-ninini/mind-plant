@@ -97,8 +97,13 @@ def _get_model() -> str:
     return _env_text("CHAT_MODEL") or _env_text("OPENAI_MODEL", "gemini-3.1-flash-lite")
 
 
-def _get_base_url() -> str:
-    base_url = _env_text("APIM_BASE_URL") or _env_text("OPENAI_BASE_URL", DEFAULT_OPENAI_BASE_URL)
+def _get_base_url(model: str) -> str:
+    apim_base = _env_text("APIM_BASE_URL")
+    if apim_base:
+        # Foundry Proxy 구조: {APIM_BASE_URL}/{MODEL_NAME}/
+        return f"{apim_base.rstrip('/')}/{model}/"
+
+    base_url = _env_text("OPENAI_BASE_URL", DEFAULT_OPENAI_BASE_URL)
     return base_url if base_url.endswith("/") else f"{base_url}/"
 
 
@@ -114,16 +119,21 @@ def _chat_completion_text(
 ) -> str:
     from openai import OpenAI
 
+    api_key = _get_api_key()
+    model = _get_model()
+    is_apim = bool(_env_text("APIM_BASE_URL"))
+
     client = OpenAI(
-        api_key=_get_api_key(),
-        base_url=_get_base_url(),
+        api_key=api_key,
+        base_url=_get_base_url(model),
+        default_headers={"api-key": api_key} if is_apim else None,
         timeout=20.0,
     )
     response = client.chat.completions.create(
-        model=_get_model(),
+        model=model,
         messages=messages,
         temperature=temperature,
-        max_tokens=max_tokens,
+        max_completion_tokens=max_tokens,
     )
     return _safe_text(response.choices[0].message.content)
 
@@ -141,6 +151,7 @@ def _get_personality_summary(survey_answers: dict[str, Any]) -> str:
     cautious = int(survey_answers.get("cautious", 3) or 3)
     needs_support = int(survey_answers.get("needs_support", 3) or 3)
     focus = int(survey_answers.get("focus", 3) or 3)
+    interest_oriented = int(survey_answers.get("interest_oriented", 3) or 3)
     small_steps = int(survey_answers.get("small_steps", 3) or 3)
 
     traits: list[str] = []
@@ -150,6 +161,8 @@ def _get_personality_summary(survey_answers: dict[str, Any]) -> str:
         traits.append("응원이 있을 때 힘이 나는 편")
     if focus <= 2:
         traits.append("짧은 몰입부터 시작하면 잘하는 편")
+    if interest_oriented >= 4:
+        traits.append("흥미가 생기면 몰입이 빨라지는 편")
     if small_steps >= 4:
         traits.append("작은 단계로 시작할 때 꾸준한 편")
 
@@ -168,6 +181,71 @@ def _concern_label(concern_type: str) -> str:
     return mapping.get(_safe_text(concern_type).lower(), "일반 고민")
 
 
+# 고민 주제별로 AI 응답의 어조/역할을 바꾸는 페르소나 정의
+PERSONAS: dict[str, dict[str, str]] = {
+    "career": {
+        "name": "진로 탐험 코치",
+        "tone": "밝고 호기심 많은 어조로 다양한 가능성을 함께 탐색하며 방향을 찾도록 돕는다",
+        "focus": "관심사와 강점을 발견하는 작은 진로 탐색 행동을 제안하는 데 집중한다",
+    },
+    "focus": {
+        "name": "몰입 코치",
+        "tone": "간결하고 에너지 있는 어조로 짧고 강한 실행을 응원한다",
+        "focus": "집중이 흐트러지지 않도록 아주 짧은 몰입 행동과 환경 정리를 제안하는 데 집중한다",
+    },
+    "habit": {
+        "name": "루틴 코치",
+        "tone": "차분하고 안정적인 어조로 꾸준함과 반복을 응원한다",
+        "focus": "작은 반복을 매일 이어가도록 습관 형성 행동을 제안하는 데 집중한다",
+    },
+    "custom": {
+        "name": "고민 동반자",
+        "tone": "유연하고 다정한 어조로 사용자가 말한 고유한 고민에 맞춰 대화한다",
+        "focus": "사용자가 입력한 주제에 맞는 맞춤형 작은 행동을 제안하는 데 집중한다",
+    },
+}
+
+# 설문 성향 점수가 임계값을 넘을 때 페르소나 어조에 덧붙이는 힌트
+TRAIT_HINTS: dict[str, str] = {
+    "cautious": "결정 전에 근거와 계획을 한 번 더 짚어주며 신중하게 안내한다",
+    "needs_support": "자주 격려하고 곁에 있다는 확신을 주는 말을 더한다",
+    "low_focus": "집중이 오래 가지 않아도 괜찮다고 안심시키며 아주 짧은 몰입 단위로 제안한다",
+    "interest_oriented": "흥미로운 포인트를 짚어주며 재미 요소를 살린 제안을 더한다",
+    "small_steps": "아주 작은 단계로 쪼개어 제안하는 것을 우선한다",
+}
+
+
+def _get_trait_hints(survey_answers: dict[str, Any]) -> list[str]:
+    if not isinstance(survey_answers, dict):
+        return []
+
+    hints: list[str] = []
+    if int(survey_answers.get("cautious", 3) or 3) >= 4:
+        hints.append(TRAIT_HINTS["cautious"])
+    if int(survey_answers.get("needs_support", 3) or 3) >= 4:
+        hints.append(TRAIT_HINTS["needs_support"])
+    if int(survey_answers.get("focus", 3) or 3) <= 2:
+        hints.append(TRAIT_HINTS["low_focus"])
+    if int(survey_answers.get("interest_oriented", 3) or 3) >= 4:
+        hints.append(TRAIT_HINTS["interest_oriented"])
+    if int(survey_answers.get("small_steps", 3) or 3) >= 4:
+        hints.append(TRAIT_HINTS["small_steps"])
+    return hints
+
+
+def _get_persona(concern_type: str, survey_answers: dict[str, Any] | None = None) -> dict[str, str]:
+    key = _safe_text(concern_type).lower()
+    base = PERSONAS.get(key, PERSONAS["custom"])
+
+    hints = _get_trait_hints(survey_answers or {})
+    if not hints:
+        return base
+
+    persona = dict(base)
+    persona["tone"] = base["tone"] + "; " + "; ".join(hints)
+    return persona
+
+
 def _survey_trait_summary(survey_answers: dict[str, Any]) -> str:
     if not isinstance(survey_answers, dict):
         return "균형형"
@@ -175,6 +253,7 @@ def _survey_trait_summary(survey_answers: dict[str, Any]) -> str:
     cautious = int(survey_answers.get("cautious", 3) or 3)
     support = int(survey_answers.get("needs_support", 3) or 3)
     focus = int(survey_answers.get("focus", 3) or 3)
+    interest_oriented = int(survey_answers.get("interest_oriented", 3) or 3)
     small = int(survey_answers.get("small_steps", 3) or 3)
 
     traits: list[str] = []
@@ -184,6 +263,8 @@ def _survey_trait_summary(survey_answers: dict[str, Any]) -> str:
         traits.append("응원형")
     if focus <= 2:
         traits.append("짧은집중형")
+    if interest_oriented >= 4:
+        traits.append("흥미주도형")
     if small >= 4:
         traits.append("작은단계형")
 
@@ -276,6 +357,25 @@ def _clean_json_text(raw_text: str) -> str:
         if text.startswith("json"):
             text = text[4:]
     return text.strip()
+
+
+def _parse_json_relaxed(raw_text: str) -> Any:
+    # 모델이 JSON 앞뒤로 설명문을 붙여도 가장 바깔쪽 괄호 구간만 추출해 파싱한다
+    text = _clean_json_text(raw_text)
+    try:
+        return json.loads(text)
+    except (ValueError, TypeError):
+        pass
+
+    start_candidates = [i for i in (text.find("{"), text.find("[")) if i != -1]
+    end_candidates = [i for i in (text.rfind("}"), text.rfind("]")) if i != -1]
+    if start_candidates and end_candidates:
+        start = min(start_candidates)
+        end = max(end_candidates)
+        if end > start:
+            return json.loads(text[start : end + 1])
+
+    raise ValueError(f"Unable to parse JSON from model output: {text[:200]}")
 
 
 def _ensure_three_goals(goals: Any, fallback_goals: list[str]) -> list[str]:
@@ -386,6 +486,7 @@ def fallback_recommendation(user_profile: dict[str, Any], plants: list[dict[str,
 
 
 def build_recommendation_prompt(user_profile: dict[str, Any], plants: list[dict[str, Any]]) -> str:
+    persona = _get_persona(user_profile.get("concern_type"), user_profile.get("survey_answers"))
     compact_plants = [
         {
             "id": p.get("id"),
@@ -401,7 +502,7 @@ def build_recommendation_prompt(user_profile: dict[str, Any], plants: list[dict[
     ]
 
     return (
-        "너는 청소년을 위한 따뜻한 진로/집중/습관 코치야. "
+        f"너는 청소년을 위한 '{persona['name']}'야. {persona['tone']}. {persona['focus']}. "
         "반드시 JSON 객체 하나만 출력해. 코드블록, 설명문, 추가 텍스트를 절대 출력하지 마.\n\n"
         "반환 JSON 키는 아래 9개를 정확히 사용해:\n"
         "personality_summary, concern_summary, plant_name, plant_id, plant_emoji, "
@@ -421,8 +522,9 @@ def recommend_plant(user_profile: dict[str, Any], plants_path: str = "plants.jso
         return fallback
 
     try:
+        persona = _get_persona(user_profile.get("concern_type"), user_profile.get("survey_answers"))
         system_prompt = (
-            "당신은 청소년의 작은 실천을 돕는 따뜻한 코치입니다. "
+            f"당신은 청소년의 작은 실천을 돕는 '{persona['name']}'입니다. {persona['tone']}. "
             "반드시 JSON 객체만 출력하고, 불필요한 텍스트를 절대 포함하지 마세요."
         )
         user_prompt = build_recommendation_prompt(user_profile, plants)
@@ -437,7 +539,7 @@ def recommend_plant(user_profile: dict[str, Any], plants_path: str = "plants.jso
                 max_tokens=700,
             )
         )
-        raw_result = json.loads(raw_text)
+        raw_result = _parse_json_relaxed(raw_text)
         if not isinstance(raw_result, dict):
             return fallback
 
@@ -447,19 +549,25 @@ def recommend_plant(user_profile: dict[str, Any], plants_path: str = "plants.jso
         return fallback
 
 
-def generate_encouragement(goal_text: str, plant_state: dict[str, Any]) -> str:
+def generate_encouragement(
+    goal_text: str,
+    plant_state: dict[str, Any],
+    concern_type: str = "",
+    survey_answers: dict[str, Any] | None = None,
+) -> str:
     goal = _safe_text(goal_text) or "오늘 목표"
     plant_name = _safe_text(plant_state.get("plant_name")) or "식물 친구"
     plant_emoji = _safe_text(plant_state.get("plant_emoji")) or "🌱"
 
     if _get_api_key():
         try:
+            persona = _get_persona(concern_type, survey_answers)
             text = _chat_completion_text(
                 [
                     {
                         "role": "system",
                         "content": (
-                            "청소년에게 보여줄 1~2문장 응원 메시지를 생성해. "
+                            f"청소년에게 보여줄 1~2문장 응원 메시지를 '{persona['name']}' 페르소나로 생성해. {persona['tone']}. "
                             "따뜻하고 짧게, 비난 없이, 의학적 표현 없이 작성해."
                         ),
                     },
@@ -507,6 +615,7 @@ def generate_companion_reply(
     if not _get_api_key():
         return fallback
 
+    persona = _get_persona(concern_type, survey_answers)
     plant_name = _safe_text(recommendation.get("plant_name")) or "식물 친구"
     concern_label = _concern_label(concern_type)
     trait_text = _survey_trait_summary(survey_answers)
@@ -527,11 +636,13 @@ def generate_companion_reply(
                 {
                     "role": "system",
                     "content": (
-                        "너는 청소년을 위한 따뜻한 식물 친구이자 짧은 코치야. "
+                        f"너는 청소년을 위한 따뜻한 식물 친구이자 '{persona['name']}'야. {persona['tone']}. {persona['focus']}. "
                         "평소엔 한국어로 1~3문장만 짧게 답하고, 실천 가능한 작은 다음 행동을 우선 제안해. "
                         "사용자의 최근 맥락과 목표 이력을 기억해서 자연스럽게 답하되, 비난, 진단, 과장된 약속은 하지 마. "
                         "사용자가 목표를 말하거나 목표 추천을 원하면, 그 목표를 5~15분 안에 할 수 있는 아주 작은 단계 2~3개로 나눠서 "
                         "1) 2) 3) 번호 목록으로 짧게 제시해. 각 단계는 한 문장으로 구체적이고 바로 실행할 수 있게 써. "
+                        "사용자가 오늘 하고 싶은 일이나 해야 할 일을 이야기했지만 아직 '오늘의 목표에 넣어줘'처럼 목표 추가를 정확히 요청하지 않았다면, "
+                        "단계로 나누지 말고 먼저 짧게 공감한 뒤 '오늘의 목표에 넣어줘'라고 말해주면 작은 목표로 나눠서 넣어주겠다고 자연스럽게 안내해. "
                         "응원을 원할 때는 목표를 나누지 말고 짧고 다정하게 격려해. "
                         "응답은 일반 텍스트만 출력해."
                     ),
@@ -560,3 +671,220 @@ def generate_companion_reply(
         _log_ai_error("generate_companion_reply", exc)
 
     return fallback
+
+
+def _fallback_goal_options(user_text: str, recommendation: dict[str, Any], goal_history: list[str]) -> list[str]:
+    goals = [str(g).strip() for g in recommendation.get("starter_goals", []) if str(g).strip()]
+    done_set = {g.strip() for g in goal_history if g and g.strip()}
+    remaining = [g for g in goals if g not in done_set]
+    base_fallback = remaining or goals
+
+    context_text = _safe_text(user_text)
+    if context_text:
+        return _ensure_three_goals(_split_goal_into_small_steps(context_text), base_fallback)
+
+    return _ensure_three_goals(base_fallback, base_fallback)
+
+
+def generate_goal_options(
+    user_text: str,
+    recommendation: dict[str, Any],
+    concern_type: str,
+    survey_answers: dict[str, Any],
+    completed_count: int,
+    goal_history: list[str],
+    chat_history: list[dict[str, str]] | None = None,
+) -> list[str]:
+    fallback = _fallback_goal_options(user_text, recommendation, goal_history)
+
+    if not _get_api_key():
+        return fallback
+
+    persona = _get_persona(concern_type, survey_answers)
+    plant_name = _safe_text(recommendation.get("plant_name")) or "식물 친구"
+    concern_label = _concern_label(concern_type)
+    trait_text = _survey_trait_summary(survey_answers)
+    recent_goals = [str(goal).strip() for goal in goal_history[-5:] if str(goal).strip()]
+    recent_chat = []
+    for entry in (chat_history or [])[-6:]:
+        if not isinstance(entry, dict):
+            continue
+        role = _safe_text(entry.get("role")) or "assistant"
+        content = _safe_text(entry.get("content"))
+        if content:
+            recent_chat.append({"role": role, "content": content})
+
+    try:
+        raw_text = _clean_json_text(
+            _chat_completion_text(
+                [
+                    {
+                        "role": "system",
+                        "content": (
+                            f"너는 청소년을 위한 '{persona['name']}'야. {persona['tone']}. {persona['focus']}. "
+                            "사용자 메시지와 맥락을 참고해 오늘 바로 실행할 수 있는 아주 작은 목표 3개를 추천해. "
+                            "각 목표는 5~15분 안에 끝낼 수 있는 구체적인 행동 한 문장이어야 해. "
+                            "3개는 실제로 실행해야 할 순서대로 배열해. 배열의 첫 번째가 가장 먼저 할 일이야. "
+                            "반드시 문자열 3개로 이루어진 JSON 배열만 출력해. 다른 설명이나 텍스트는 절대 출력하지 마."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"식물 이름: {plant_name}\n"
+                            f"고민 유형: {concern_label}\n"
+                            f"설문 성향 요약: {trait_text}\n"
+                            f"완료 횟수: {max(0, int(completed_count))}\n"
+                            f"추천 시작 목표: {json.dumps(fallback, ensure_ascii=False)}\n"
+                            f"최근 완료 목표: {json.dumps(recent_goals, ensure_ascii=False)}\n"
+                            f"최근 대화: {json.dumps(recent_chat, ensure_ascii=False)}\n"
+                            f"사용자 메시지: {user_text}\n"
+                        ),
+                    },
+                ],
+                temperature=0.6,
+                max_tokens=300,
+            )
+        )
+        parsed = _parse_json_relaxed(raw_text)
+        return _ensure_three_goals(parsed, fallback)
+    except Exception as exc:
+        _log_ai_error("generate_goal_options", exc)
+        return fallback
+
+
+def _fallback_watering_reply(worry_text: str, recommendation: dict[str, Any], completed_count: int) -> str:
+    plant_name = _safe_text(recommendation.get("plant_name")) or "식물 친구"
+    worry = _safe_text(worry_text) or "오늘의 고민"
+    next_count = max(0, int(completed_count)) + 1
+    return (
+        f"'{worry}', 그 마음 잘 들었어. 그런 하루에도 목표를 해낸 건 진짜 대단한 거야. "
+        f"{plant_name}가 그 마음을 물처럼 머금고 자라고 있어. "
+        f"다음에 또 물을 주러 오면, {plant_name}가 조금 더 자란 모습을 보여줄게."
+    )
+
+
+def generate_watering_reply(
+    worry_text: str,
+    recommendation: dict[str, Any],
+    concern_type: str,
+    survey_answers: dict[str, Any],
+    completed_count: int,
+    chat_history: list[dict[str, str]] | None = None,
+) -> str:
+    fallback = _fallback_watering_reply(worry_text, recommendation, completed_count)
+
+    if not _get_api_key():
+        return fallback
+
+    persona = _get_persona(concern_type, survey_answers)
+    plant_name = _safe_text(recommendation.get("plant_name")) or "식물 친구"
+    concern_label = _concern_label(concern_type)
+    trait_text = _survey_trait_summary(survey_answers)
+    recent_chat = []
+    for entry in (chat_history or [])[-6:]:
+        if not isinstance(entry, dict):
+            continue
+        role = _safe_text(entry.get("role")) or "assistant"
+        content = _safe_text(entry.get("content"))
+        if content:
+            recent_chat.append({"role": role, "content": content})
+
+    try:
+        text = _chat_completion_text(
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        f"너는 청소년의 마음을 들어주는 '{persona['name']}'이자 식물 친구야. {persona['tone']}. "
+                        "사용자가 방금 나눈 고민을 판단하거나 바로 해결하려 하지 말고, 먼저 있는 그대로 공감하며 "
+                        "그 마음을 짧게 되짚어줘서 '정말 듣고 있다'는 느낌을 줘. "
+                        "그다음, 이런 마음이 드는 날에도 오늘 목표를 해낸 것 자체가 이미 의미 있는 실천이었다는 걸 짚어주고, "
+                        "식물이 자라는 모습을 함께 지켜보고 싶다는 다정한 기대로 마무리해. "
+                        "2~4문장, 한국어, 비난·진단·과장된 약속 금지. 응답은 일반 텍스트만 출력해."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"식물 이름: {plant_name}\n"
+                        f"고민 유형: {concern_label}\n"
+                        f"설문 성향 요약: {trait_text}\n"
+                        f"완료 횟수: {max(0, int(completed_count))}\n"
+                        f"최근 대화: {json.dumps(recent_chat, ensure_ascii=False)}\n"
+                        f"방금 나눈 오늘의 고민: {worry_text}\n"
+                    ),
+                },
+            ],
+            temperature=0.7,
+            max_tokens=220,
+        )
+        if text:
+            return text
+    except Exception as exc:
+        _log_ai_error("generate_watering_reply", exc)
+
+    return fallback
+
+
+def generate_goal_breakdown(
+    goal_text: str,
+    recommendation: dict[str, Any],
+    concern_type: str,
+    survey_answers: dict[str, Any],
+    completed_count: int,
+    chat_history: list[dict[str, str]] | None = None,
+) -> list[str]:
+    fallback = _split_goal_into_small_steps(goal_text)
+
+    if not _get_api_key():
+        return fallback
+
+    persona = _get_persona(concern_type, survey_answers)
+    plant_name = _safe_text(recommendation.get("plant_name")) or "식물 친구"
+    concern_label = _concern_label(concern_type)
+    trait_text = _survey_trait_summary(survey_answers)
+    recent_chat = []
+    for entry in (chat_history or [])[-6:]:
+        if not isinstance(entry, dict):
+            continue
+        role = _safe_text(entry.get("role")) or "assistant"
+        content = _safe_text(entry.get("content"))
+        if content:
+            recent_chat.append({"role": role, "content": content})
+
+    try:
+        raw_text = _clean_json_text(
+            _chat_completion_text(
+                [
+                    {
+                        "role": "system",
+                        "content": (
+                            f"너는 청소년을 위한 '{persona['name']}'야. {persona['tone']}. {persona['focus']}. "
+                            "사용자가 고른 목표 하나를 5~15분 안에 끝낼 수 있는 아주 작은 실행 단계 3개로 쪼개. "
+                            "순서대로 실행하면 원래 목표가 끝나도록, 각 단계는 구체적인 행동 한 문장이어야 해. "
+                            "배열의 순서는 실제로 실행해야 할 순서와 정확히 같아야 해. 첫 번째가 가장 먼저 할 일이야. "
+                            "반드시 문자열 3개로 이루어진 JSON 배열만 출력해. 다른 설명이나 텍스트는 절대 출력하지 마."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"쪼갤 목표: {goal_text}\n"
+                            f"식물 이름: {plant_name}\n"
+                            f"고민 유형: {concern_label}\n"
+                            f"설문 성향 요약: {trait_text}\n"
+                            f"완료 횟수: {max(0, int(completed_count))}\n"
+                            f"최근 대화: {json.dumps(recent_chat, ensure_ascii=False)}\n"
+                        ),
+                    },
+                ],
+                temperature=0.5,
+                max_tokens=260,
+            )
+        )
+        parsed = _parse_json_relaxed(raw_text)
+        return _ensure_three_goals(parsed, fallback)
+    except Exception as exc:
+        _log_ai_error("generate_goal_breakdown", exc)
+        return fallback

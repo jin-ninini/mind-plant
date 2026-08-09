@@ -11,7 +11,7 @@ from typing import Any, Callable
 import streamlit as st
 from dotenv import load_dotenv
 
-from growth import build_plant_state, get_growth_progress, get_growth_stage
+from growth import build_plant_state, get_growth_progress, get_growth_stage, get_next_stage_preview
 from storage import load_user_data, reset_user_data, save_user_data
 
 load_dotenv()
@@ -178,7 +178,13 @@ def _fallback_recommend_plant(user_profile: dict[str, Any], plants_path: str = "
     }
 
 
-def _fallback_generate_encouragement(goal_text: str, plant_state: dict[str, Any]) -> str:
+def _fallback_generate_encouragement(
+    goal_text: str,
+    plant_state: dict[str, Any],
+    concern_type: str = "",
+    survey_answers: dict[str, Any] | None = None,
+) -> str:
+    del concern_type, survey_answers
     goal = goal_text.strip() if goal_text else "오늘 목표"
     plant_emoji = str(plant_state.get("plant_emoji", "🌱"))
     plant_name = str(plant_state.get("plant_name", "식물 친구"))
@@ -192,6 +198,12 @@ def _split_goal_into_small_steps(goal: str) -> list[str]:
         f"2) 그 시간에 '{target}'의 가장 쉬운 부분만 10분 해보기",
         "3) 끝나면 완료 버튼 누르고 어디까지 했는지 한 줄 남기기",
     ]
+
+
+def _wants_goal_added(text: str) -> bool:
+    normalized = "".join(str(text or "").split())
+    triggers = ("목표에넣어줘", "목표로넣어줘", "목표에추가해줘", "목표로추가해줘")
+    return any(trigger in normalized for trigger in triggers)
 
 
 def _fallback_generate_companion_reply(
@@ -262,13 +274,42 @@ def _fallback_generate_watering_reply(
     completed_count: int,
     chat_history: list[dict[str, str]] | None = None,
 ) -> str:
-    del concern_type, survey_answers, completed_count, chat_history
+    del concern_type, survey_answers, chat_history
     plant_name = str(recommendation.get("plant_name", "식물 친구"))
     worry = worry_text.strip() if worry_text else "오늘의 고민"
     return (
-        f"좋아, '{worry}'를 물처럼 내게 쏟아줘. {plant_name}가 전부 흡수해 줄게. "
-        "너의 고민을 내가 전부 없애줄게, 나에게 다 줘. 이제 물을 직접 줘 봐."
+        f"'{worry}', 그 마음 잘 들었어. 그런 하루에도 목표를 해낸 건 진짜 대단한 거야. "
+        f"{plant_name}가 그 마음을 물처럼 머금고 자라고 있어. "
+        f"다음에 또 물을 주러 오면, {plant_name}가 조금 더 자란 모습을 보여줄게."
     )
+
+
+def _fallback_generate_goal_options(
+    user_text: str,
+    recommendation: dict[str, Any],
+    concern_type: str,
+    survey_answers: dict[str, Any],
+    completed_count: int,
+    goal_history: list[str],
+    chat_history: list[dict[str, str]] | None = None,
+) -> list[str]:
+    del user_text, concern_type, survey_answers, completed_count, chat_history
+    goals = [str(g).strip() for g in recommendation.get("starter_goals", []) if str(g).strip()]
+    done_set = {g.strip() for g in goal_history if g and g.strip()}
+    remaining = [g for g in goals if g not in done_set]
+    return remaining or goals or ["오늘 할 수 있는 10분 행동 하나 정해보기"]
+
+
+def _fallback_generate_goal_breakdown(
+    goal_text: str,
+    recommendation: dict[str, Any],
+    concern_type: str,
+    survey_answers: dict[str, Any],
+    completed_count: int,
+    chat_history: list[dict[str, str]] | None = None,
+) -> list[str]:
+    del recommendation, concern_type, survey_answers, completed_count, chat_history
+    return _split_goal_into_small_steps(goal_text)
 
 
 def _load_ai_functions() -> tuple[
@@ -277,6 +318,8 @@ def _load_ai_functions() -> tuple[
     Callable[..., str],
     Callable[..., str],
     Callable[..., str],
+    Callable[..., list[str]],
+    Callable[..., list[str]],
     bool,
 ]:
     try:
@@ -294,12 +337,22 @@ def _load_ai_functions() -> tuple[
         if not callable(watering_reply):
             watering_reply = _fallback_generate_watering_reply
 
+        goal_options = getattr(ai_module, "generate_goal_options", _fallback_generate_goal_options)
+        if not callable(goal_options):
+            goal_options = _fallback_generate_goal_options
+
+        goal_breakdown = getattr(ai_module, "generate_goal_breakdown", _fallback_generate_goal_breakdown)
+        if not callable(goal_breakdown):
+            goal_breakdown = _fallback_generate_goal_breakdown
+
         return (
             recommend_plant,
             generate_encouragement,
             generate_companion_reply,
             goal_reflection_reply,
             watering_reply,
+            goal_options,
+            goal_breakdown,
             True,
         )
     except Exception:
@@ -309,6 +362,8 @@ def _load_ai_functions() -> tuple[
             _fallback_generate_companion_reply,
             _fallback_generate_goal_reflection_reply,
             _fallback_generate_watering_reply,
+            _fallback_generate_goal_options,
+            _fallback_generate_goal_breakdown,
             False,
         )
 
@@ -319,6 +374,8 @@ def _load_ai_functions() -> tuple[
     generate_companion_reply_fn,
     generate_goal_reflection_reply_fn,
     generate_watering_reply_fn,
+    generate_goal_options_fn,
+    generate_goal_breakdown_fn,
     ai_available,
 ) = _load_ai_functions()
 
@@ -626,10 +683,15 @@ def _commit_goal_completion(recommendation: dict[str, Any]) -> None:
     completed_count = int(st.session_state.completed_count)
     next_count = completed_count + 1
     next_state = build_plant_state(recommendation, next_count)
-    encouragement = generate_encouragement_fn(pending_goal, next_state)
+    encouragement = generate_encouragement_fn(
+        pending_goal, next_state, st.session_state.concern_type, st.session_state.survey_answers
+    )
 
     st.session_state.completed_count = next_count
     st.session_state.today_goal = ""
+    st.session_state.today_goal_options = [
+        g for g in st.session_state.today_goal_options if str(g).strip() != pending_goal
+    ]
     st.session_state.last_encouragement = encouragement
     st.session_state.show_particle_burst = True
     st.session_state.goal_history.append(pending_goal)
@@ -791,6 +853,7 @@ def _persist_state() -> None:
         "recommendation": st.session_state.recommendation,
         "completed_count": st.session_state.completed_count,
         "today_goal": st.session_state.today_goal,
+        "today_goal_options": st.session_state.today_goal_options,
         "last_encouragement": st.session_state.last_encouragement,
         "goal_history": st.session_state.goal_history,
         "chat_history": st.session_state.chat_history,
@@ -843,6 +906,7 @@ def _reset_journey_state(next_page: str = "concern", clear_mbti: bool = False) -
     st.session_state.recommendation = None
     st.session_state.completed_count = 0
     st.session_state.today_goal = ""
+    st.session_state.today_goal_options = []
     st.session_state.last_encouragement = ""
     st.session_state.goal_history = []
     st.session_state.chat_history = []
@@ -878,6 +942,8 @@ def _init_state() -> None:
     st.session_state.recommendation = loaded.get("recommendation")
     st.session_state.completed_count = int(loaded.get("completed_count", 0) or 0)
     st.session_state.today_goal = loaded.get("today_goal", "")
+    loaded_goal_options = loaded.get("today_goal_options", [])
+    st.session_state.today_goal_options = loaded_goal_options if isinstance(loaded_goal_options, list) else []
     st.session_state.last_encouragement = loaded.get("last_encouragement", "")
     st.session_state.pending_goal_text = str(loaded.get("pending_goal_text", "") or "")
     st.session_state.pending_reflection_text = str(loaded.get("pending_reflection_text", "") or "")
@@ -1394,6 +1460,21 @@ st.markdown(
                 margin: 0.35rem 0 0.75rem;
             }
 
+            [class*="st-key-concern_chip_"] button {
+                min-height: 0 !important;
+                height: auto !important;
+                padding: 0.38rem 0.68rem !important;
+                border: 2px solid var(--pixel-ink) !important;
+                border-bottom-width: 2px !important;
+                box-shadow: 2px 2px 0 var(--pixel-shadow) !important;
+                background: var(--theme-chip) !important;
+                color: var(--pixel-ink) !important;
+                font-family: var(--font-display) !important;
+                font-size: 0.82rem !important;
+                line-height: 1.5 !important;
+                letter-spacing: 0.03em !important;
+            }
+
             .stButton > button {
                 min-height: 3.55rem;
                 border-radius: 0;
@@ -1509,6 +1590,8 @@ st.markdown(
                 border-radius: 0;
                 box-shadow: 3px 3px 0 rgba(24, 49, 70, 0.2);
                 padding: 0.55rem 0.72rem;
+                height: 4.6rem;
+                box-sizing: border-box;
             }
 
             [data-testid="stMetricLabel"] {
@@ -1523,6 +1606,41 @@ st.markdown(
                 font-size: 1.24rem;
                 letter-spacing: 0.03em;
                 line-height: 1.4;
+            }
+
+            .st-key-completed_count_popover button {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                justify-content: center !important;
+                gap: 0.1rem !important;
+                width: 100% !important;
+                height: 4.6rem !important;
+                min-height: 0 !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
+                background: linear-gradient(180deg, #FFFDF4 0%, #ECFFF4 100%) !important;
+                border: 2px solid var(--pixel-ink) !important;
+                border-radius: 0 !important;
+                box-shadow: 3px 3px 0 rgba(24, 49, 70, 0.2) !important;
+                color: var(--pixel-ink) !important;
+                padding: 0.55rem 0.72rem !important;
+            }
+
+            .st-key-completed_count_popover button::before {
+                content: "완료 횟수";
+                font-family: var(--font-display);
+                font-size: 0.78rem;
+                letter-spacing: 0.03em;
+                line-height: 1.5;
+            }
+
+            .st-key-completed_count_popover [data-testid="stMarkdownContainer"] p {
+                font-family: var(--font-display) !important;
+                font-size: 1.24rem !important;
+                letter-spacing: 0.03em !important;
+                line-height: 1.4 !important;
+                margin: 0 !important;
             }
 
             [data-testid="stRadio"] {
@@ -1688,23 +1806,34 @@ elif st.session_state.page == "concern":
     st.caption("첫 스테이지: 지금 마음에 가장 가까운 고민을 선택하세요")
     if st.session_state.mbti_type:
         st.markdown(f"<div class='muted-copy'>당신의 MBTI · {st.session_state.mbti_type}</div>", unsafe_allow_html=True)
+
+    concern_labels = list(CONCERN_OPTIONS.keys())
+    concern_values = list(CONCERN_OPTIONS.values())
+    current_concern = str(st.session_state.concern_type or "") or concern_values[0]
+
+    st.markdown(
+        f"<style>.st-key-concern_chip_{current_concern} button {{"
+        "background: var(--theme-accent) !important;"
+        "color: #FFFFFF !important;"
+        "}}</style>",
+        unsafe_allow_html=True,
+    )
+
     with st.container(border=True):
         st.markdown("<div class='section-note'>지금의 마음에 가장 가까운 주제를 골라주세요.</div>", unsafe_allow_html=True)
-        st.markdown("<div class='badge-row'><span class='goal-chip'>진로가 막막해요</span><span class='goal-chip'>집중이 잘 안 돼요</span><span class='goal-chip'>목표를 꾸준히 못 해요</span><span class='goal-chip'>기타 주제</span></div>", unsafe_allow_html=True)
 
-        concern_labels = list(CONCERN_OPTIONS.keys())
-        concern_values = list(CONCERN_OPTIONS.values())
-        current_concern = str(st.session_state.concern_type or "")
-        selected_index = concern_values.index(current_concern) if current_concern in concern_values else 0
+        chip_cols = st.columns(len(concern_labels))
+        for col, label, value in zip(chip_cols, concern_labels, concern_values):
+            with col:
+                if st.button(label, key=f"concern_chip_{value}", use_container_width=True):
+                    st.session_state.concern_type = value
+                    if value != "custom":
+                        st.session_state.custom_concern_text = ""
+                    current_concern = value
+                    _persist_state()
+                    st.rerun()
 
-        selected_label = st.radio(
-            "지금 가장 가까운 고민을 골라주세요.",
-            options=concern_labels,
-            index=selected_index,
-            label_visibility="collapsed",
-        )
-
-        selected_value = CONCERN_OPTIONS[selected_label]
+        selected_value = current_concern
         custom_concern_text = ""
         if selected_value == "custom":
             custom_concern_text = st.text_input(
@@ -1866,112 +1995,85 @@ elif st.session_state.page == "watering_ritual":
         _persist_state()
         st.rerun()
 
-    st.title("고민 물주기")
+    st.title("식물에게 물주기")
     st.markdown(f"<div class='section-note'>완료한 목표 · {pending_goal}</div>", unsafe_allow_html=True)
 
-    submitted_worry = str(st.session_state.pending_worry_text or "").strip()
-    if not submitted_worry:
-        worry_text = st.text_area(
-            "식물이 묻는 오늘의 고민",
-            placeholder="예: 오늘은 시작이 너무 무거웠어",
-            height=110,
-        )
-        col_water1, col_water2 = st.columns(2)
-        with col_water1:
-            if st.button("물뿌리개에 나의 고민 담기", use_container_width=True):
-                if not worry_text.strip():
-                    st.warning("오늘의 고민을 한 줄 이상 적어 주세요.")
-                else:
-                    watering_reply = generate_watering_reply_fn(
-                        worry_text.strip(),
-                        recommendation,
-                        st.session_state.concern_type,
-                        st.session_state.survey_answers,
-                        int(st.session_state.completed_count),
-                        st.session_state.chat_history,
-                    )
-                    st.session_state.pending_worry_text = worry_text.strip()
-                    st.session_state.watering_can_filled = False
-                    st.session_state.watering_warning_message = ""
-                    st.session_state.chat_history.append({"role": "user", "content": f"오늘의 고민: {worry_text.strip()}"})
-                    st.session_state.chat_history.append({"role": "assistant", "content": watering_reply})
-                    st.session_state.chat_history = st.session_state.chat_history[-30:]
-                    _persist_state()
-                    st.rerun()
-        with col_water2:
-            if st.button("이전 대화로", use_container_width=True):
-                st.session_state.watering_warning_message = ""
-                st.session_state.page = "goal_reflection"
-                _persist_state()
-                st.rerun()
-    else:
-        total_steps = 3
-        current_steps = min(total_steps, max(0, int(st.session_state.watering_progress or 0)))
-        current_level = int(build_plant_state(recommendation, int(st.session_state.completed_count))["growth_stage"]["level"])
+    total_steps = 3
+    current_steps = min(total_steps, max(0, int(st.session_state.watering_progress or 0)))
+    current_level = int(build_plant_state(recommendation, int(st.session_state.completed_count))["growth_stage"]["level"])
 
+    st.markdown(
+        (
+            "<div class='watering-panel'>"
+            "<div class='watering-can'>물을 담아 식물에게 줘보세요.</div>"
+            f"<div class='stage-pill'>{current_steps}/{total_steps}번 물 주기</div>"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+    next_stage_preview = get_next_stage_preview(int(st.session_state.completed_count))
+    if next_stage_preview:
+        remaining = int(next_stage_preview["remaining"])
+        if remaining <= 1:
+            preview_text = f"이번 물주기를 마치면 {next_stage_preview['emoji']} {next_stage_preview['stage']}로 자라나요!"
+        else:
+            preview_text = f"앞으로 {remaining}번만 더 실천하면 {next_stage_preview['emoji']} {next_stage_preview['stage']}를 만날 수 있어요."
+        st.markdown(f"<div class='soft-text'>🌟 {preview_text}</div>", unsafe_allow_html=True)
+
+    warning_message = str(st.session_state.get("watering_warning_message", "") or "").strip()
+    if warning_message:
+        st.error(warning_message)
+
+    can_filled = st.session_state.get("watering_can_filled", False)
+    if st.session_state.get("watering_splash_visible", False):
         st.markdown(
-            (
-                "<div class='watering-panel'>"
-                "<div class='watering-can'>고민을 담아 식물에게 줘보세요.</div>"
-                f"<div class='stage-pill'>{current_steps}/{total_steps}번 물 주기</div>"
-                "</div>"
-            ),
+            "<div class='watering-splash'><span></span><span></span><span></span><span></span><span></span><span></span></div>",
             unsafe_allow_html=True,
         )
+        st.session_state.watering_splash_visible = False
 
-        warning_message = str(st.session_state.get("watering_warning_message", "") or "").strip()
-        if warning_message:
-            st.error(warning_message)
-
-        can_filled = st.session_state.get("watering_can_filled", False)
-        if st.session_state.get("watering_splash_visible", False):
+    _, water_plant_col, _ = st.columns([1, 2, 1])
+    with water_plant_col:
+        _render_plant_avatar(
+            plant_id=str(recommendation.get("plant_id", "sprout")),
+            label="물 줄 식물",
+            size_class="avatar-md",
+            level=current_level,
+            with_growth_effect=False,
+        )
+        if can_filled:
             st.markdown(
-                "<div class='watering-splash'><span></span><span></span><span></span><span></span><span></span><span></span></div>",
+                "<style>.st-key-watering_plant_hitbox button {"
+                "cursor: url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'>"
+                "<path fill='%239fb9ff' stroke='%23183146' stroke-width='2' d='M5 9h15l4 5h6v4h-5l-2 9H9l2-9H5z'/>"
+                "<path fill='%23ffffff' stroke='%23183146' stroke-width='2' d='M14 6c4 0 6 2 6 5h-4c0-1-1-2-2-2z'/>"
+                "<circle cx='26' cy='24' r='1.5' fill='%235c8bff'/><circle cx='30' cy='28' r='1.5' fill='%235c8bff'/></svg>\") 6 6, auto !important;"
+                "}</style>",
                 unsafe_allow_html=True,
             )
-            st.session_state.watering_splash_visible = False
-
-        _, water_plant_col, _ = st.columns([1, 2, 1])
-        with water_plant_col:
-            _render_plant_avatar(
-                plant_id=str(recommendation.get("plant_id", "sprout")),
-                label="물 줄 식물",
-                size_class="avatar-md",
-                level=current_level,
-                with_growth_effect=False,
-            )
-            if can_filled:
-                st.markdown(
-                    "<style>.st-key-watering_plant_hitbox button {"
-                    "cursor: url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'>"
-                    "<path fill='%239fb9ff' stroke='%23183146' stroke-width='2' d='M5 9h15l4 5h6v4h-5l-2 9H9l2-9H5z'/>"
-                    "<path fill='%23ffffff' stroke='%23183146' stroke-width='2' d='M14 6c4 0 6 2 6 5h-4c0-1-1-2-2-2z'/>"
-                    "<circle cx='26' cy='24' r='1.5' fill='%235c8bff'/><circle cx='30' cy='28' r='1.5' fill='%235c8bff'/></svg>\") 6 6, auto !important;"
-                    "}</style>",
-                    unsafe_allow_html=True,
-                )
-            if st.button("식물 클릭", key="watering_plant_hitbox", use_container_width=True):
-                if not can_filled:
-                    st.session_state.watering_warning_message = "먼저 물뿌리개에 고민을 담아 주세요."
+        if st.button("식물 클릭", key="watering_plant_hitbox", use_container_width=True):
+            if not can_filled:
+                st.session_state.watering_warning_message = "먼저 물뿌리개를 채워 주세요."
+            else:
+                next_steps = current_steps + 1
+                st.session_state.watering_splash_visible = True
+                st.session_state.watering_can_filled = False
+                st.session_state.watering_warning_message = ""
+                if next_steps >= total_steps:
+                    _commit_goal_completion(recommendation)
+                    st.session_state.page = "home"
                 else:
-                    next_steps = current_steps + 1
-                    st.session_state.watering_splash_visible = True
-                    st.session_state.watering_can_filled = False
-                    st.session_state.watering_warning_message = ""
-                    if next_steps >= total_steps:
-                        _commit_goal_completion(recommendation)
-                        st.session_state.page = "home"
-                    else:
-                        st.session_state.watering_progress = next_steps
-                _persist_state()
-                st.rerun()
-
-        if st.button(f"물뿌리개에 나의 고민 담기 ({current_steps}/{total_steps})", use_container_width=True, key="watering_can_fill_button"):
-            st.session_state.watering_can_filled = True
-            st.session_state.watering_splash_visible = False
-            st.session_state.watering_warning_message = ""
+                    st.session_state.watering_progress = next_steps
             _persist_state()
             st.rerun()
+
+    if st.button(f"물뿌리개 채우기 ({current_steps}/{total_steps})", use_container_width=True, key="watering_can_fill_button"):
+        st.session_state.watering_can_filled = True
+        st.session_state.watering_splash_visible = False
+        st.session_state.watering_warning_message = ""
+        _persist_state()
+        st.rerun()
 
 
 elif st.session_state.page == "recommendation":
@@ -1997,13 +2099,6 @@ elif st.session_state.page == "recommendation":
         st.markdown(f"<div class='muted-copy'>고민 요약 · {recommendation.get('concern_summary', '')}</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='muted-copy'>상징 · {recommendation.get('plant_symbol', '')}</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='muted-copy'>추천 이유 · {recommendation.get('plant_reason', '')}</div>", unsafe_allow_html=True)
-
-        st.markdown("<div class='section-note'>시작 목표 예시</div>", unsafe_allow_html=True)
-        for idx, goal in enumerate(recommendation.get("starter_goals", []), start=1):
-            st.markdown(
-                f"<div class='goal-row'><span class='goal-index'>{idx}</span><span class='goal-text'>{goal}</span></div>",
-                unsafe_allow_html=True,
-            )
         st.markdown("</div>", unsafe_allow_html=True)
 
         if st.button("이 식물과 시작하기", use_container_width=True):
@@ -2040,7 +2135,8 @@ elif st.session_state.page == "home":
         opening = (
             f"안녕, 나는 {plant_state['plant_name']}이야. "
             f"너의 {_concern_label(st.session_state.concern_type, st.session_state.custom_concern_text)} 흐름을 기억하고 있어. "
-            "목표 추천이 필요하면 '오늘 목표 추천해줘'라고 말해줘."
+            "오늘 하고 싶은 일이나 해야 할 일이 있으면 편하게 말해줄래? "
+            "그다음 '오늘의 목표에 넣어줘'라고 말해주면, 그 이야기를 바탕으로 딱 맞는 작은 목표로 나눠서 오늘의 목표에 넣어줄게."
         )
         st.session_state.chat_history = [{"role": "assistant", "content": opening}]
         _persist_state()
@@ -2077,22 +2173,39 @@ elif st.session_state.page == "home":
         with st.form("home_chat_form", clear_on_submit=True):
             chat_input = st.text_input(
                 "식물 친구에게 할 말",
-                placeholder="예: 오늘 목표 추천해줘",
+                placeholder="예: 오늘 수학 숙제랑 방 청소 해야 해",
                 label_visibility="collapsed",
             )
             send = st.form_submit_button("보내기", use_container_width=True)
 
         if send and chat_input.strip():
             st.session_state.chat_history.append({"role": "user", "content": chat_input.strip()})
-            reply = generate_companion_reply_fn(
-                chat_input,
-                recommendation,
-                st.session_state.concern_type,
-                st.session_state.survey_answers,
-                completed_count,
-                st.session_state.goal_history,
-                st.session_state.chat_history,
-            )
+
+            if _wants_goal_added(chat_input):
+                new_goals = generate_goal_options_fn(
+                    chat_input,
+                    recommendation,
+                    st.session_state.concern_type,
+                    st.session_state.survey_answers,
+                    completed_count,
+                    st.session_state.goal_history,
+                    st.session_state.chat_history,
+                )
+                st.session_state.today_goal_options = new_goals
+                goals_text = "\n".join(f"{idx}) {g}" for idx, g in enumerate(new_goals, start=1))
+                plant_name = str(recommendation.get("plant_name", "식물 친구"))
+                reply = f"좋아, {plant_name}가 오늘의 목표에 이렇게 넣었어!\n{goals_text}"
+            else:
+                reply = generate_companion_reply_fn(
+                    chat_input,
+                    recommendation,
+                    st.session_state.concern_type,
+                    st.session_state.survey_answers,
+                    completed_count,
+                    st.session_state.goal_history,
+                    st.session_state.chat_history,
+                )
+
             st.session_state.chat_history.append({"role": "assistant", "content": reply})
             st.session_state.chat_history = st.session_state.chat_history[-30:]
             _persist_state()
@@ -2106,26 +2219,72 @@ elif st.session_state.page == "home":
 
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("완료 횟수", f"{completed_count}회")
+        with st.popover(f"{completed_count}회", use_container_width=True, key="completed_count_popover"):
+            st.markdown("**완료한 목표**")
+            completed_goals = list(st.session_state.goal_history or [])
+            if completed_goals:
+                for idx, goal in enumerate(reversed(completed_goals), start=1):
+                    st.markdown(f"{idx}. {goal}")
+            else:
+                st.caption("아직 완료한 목표가 없어요.")
     with col2:
         st.metric("현재 단계", growth_stage["stage"])
 
-    st.markdown("<div class='badge-row'><span class='goal-chip'>식물 성장 보상</span><span class='goal-chip'>짧은 실천 루프</span><span class='goal-chip'>데모용 핵심 화면</span></div>", unsafe_allow_html=True)
-
     st.markdown("<div class='section-note'>오늘의 목표</div>", unsafe_allow_html=True)
-    today_goal = st.text_input(
-        "오늘의 목표",
-        value=st.session_state.today_goal,
-        placeholder="예: 수학 문제 5개 풀기",
-        label_visibility="collapsed",
-    )
+    goal_options = [str(g).strip() for g in (st.session_state.today_goal_options or []) if str(g).strip()]
+    if goal_options:
+        default_index = goal_options.index(st.session_state.today_goal) if st.session_state.today_goal in goal_options else 0
+        today_goal = st.radio(
+            "오늘의 목표",
+            options=goal_options,
+            index=default_index,
+            label_visibility="collapsed",
+            key="today_goal_radio",
+        )
+        st.session_state.today_goal = today_goal
+
+        if st.button("더 잘게 나눠줘", use_container_width=True):
+            sub_goals = [
+                g
+                for g in generate_goal_breakdown_fn(
+                    today_goal,
+                    recommendation,
+                    st.session_state.concern_type,
+                    st.session_state.survey_answers,
+                    completed_count,
+                    st.session_state.chat_history,
+                )
+                if g
+            ]
+            current_options = list(st.session_state.today_goal_options)
+            insert_at = current_options.index(today_goal) if today_goal in current_options else len(current_options)
+            remaining_options = [g for g in current_options if g != today_goal]
+            st.session_state.today_goal_options = remaining_options[:insert_at] + sub_goals + remaining_options[insert_at:]
+            st.session_state.today_goal = sub_goals[0] if sub_goals else today_goal
+            breakdown_text = "\n".join(f"{idx}) {g}" for idx, g in enumerate(sub_goals, start=1))
+            st.session_state.chat_history.append(
+                {"role": "user", "content": f"'{today_goal}' 목표를 더 잘게 나눠줘"}
+            )
+            st.session_state.chat_history.append(
+                {
+                    "role": "assistant",
+                    "content": f"'{today_goal}'을 더 작은 단계로 나눠서 오늘의 목표 목록에 추가했어!\n{breakdown_text}",
+                }
+            )
+            st.session_state.chat_history = st.session_state.chat_history[-30:]
+            _persist_state()
+            st.rerun()
+    else:
+        st.caption("채팅으로 '오늘의 목표에 넣어줘'라고 말하면 목표 목록이 여기에 나타나요.")
+        today_goal = ""
+        st.session_state.today_goal = today_goal
 
     col3, col4 = st.columns(2)
     with col3:
         if st.button("목표 완료", use_container_width=True):
             stripped_goal = today_goal.strip()
             if not stripped_goal:
-                st.warning("오늘의 목표를 입력한 뒤 완료를 눌러 주세요.")
+                st.warning("채팅으로 목표를 추천받은 뒤 목표를 선택하고 완료를 눌러 주세요.")
             else:
                 st.session_state.pending_goal_text = stripped_goal
                 st.session_state.page = "goal_reflection"

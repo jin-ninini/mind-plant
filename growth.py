@@ -83,6 +83,28 @@ def get_growth_stage(completed_count: int) -> dict[str, Any]:
     }
 
 
+def get_next_stage_preview(completed_count: int) -> dict[str, Any] | None:
+    count = max(0, int(completed_count))
+    current = get_growth_stage(count)
+    next_target = current.get("next_target")
+    if next_target is None:
+        return None
+
+    next_rule = next(
+        (rule for rule in GROWTH_RULES if int(rule.get("min", 0) or 0) == int(next_target)),
+        None,
+    )
+    if next_rule is None:
+        return None
+
+    return {
+        "stage": str(next_rule["stage"]),
+        "emoji": str(next_rule["emoji"]),
+        "message": str(next_rule["message"]),
+        "remaining": max(0, int(next_target) - count),
+    }
+
+
 def get_growth_progress(completed_count: int) -> dict[str, Any]:
     count = max(0, int(completed_count))
     stage = get_growth_stage(count)
