@@ -1,4 +1,4 @@
-# MindPlant Design Guide (English)
+# MindPlant Design Guide
 
 This document defines the design standards needed to reproduce the current MindPlant Streamlit app. The core impression of the app is `cute pixel plant growth game`, `teen-friendly coaching`, `soft pastel background`, and `pixel UI`.
 
