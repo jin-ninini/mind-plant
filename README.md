@@ -140,4 +140,4 @@ This repository is provided for viewing and portfolio evaluation purposes only.
 
 No permission is granted to copy, modify, distribute, sublicense, publish, or commercially use any part of this project, including its source code, assets, documentation, design, or other contents, without prior written permission from the copyright holder.
 
-If you wish to use this project or any portion of it, please obtain written permission from the repository owner in advance.
+If you want to use this project or any portion of it, please obtain written permission from the repository owner in advance.
