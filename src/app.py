@@ -29,8 +29,8 @@ if os.environ.get("MINDPLANT_TERMINAL_HELP_SHOWN") != "1":
     os.environ["MINDPLANT_TERMINAL_HELP_SHOWN"] = "1"
 
 DATA_PATH = "data/demo_user.json"
-PLANTS_PATH = "plants.json"
-AVATAR_DIR = Path(__file__).resolve().parent / "assets" / "plants"
+PLANTS_PATH = "data/plants.json"
+AVATAR_DIR = Path(__file__).resolve().parent.parent / "assets" / "plants"
 
 MBTI_QUESTIONS: tuple[dict[str, str], ...] = (
     {
@@ -118,7 +118,7 @@ SURVEY_DEFAULT_SCORE = 3
 
 
 # ai.py import 실패 시에도 데모 화면이 계속 동작하도록 fallback을 제공합니다.
-def _fallback_recommend_plant(user_profile: dict[str, Any], plants_path: str = "plants.json") -> dict[str, Any]:
+def _fallback_recommend_plant(user_profile: dict[str, Any], plants_path: str = "data/plants.json") -> dict[str, Any]:
     concern_type = str(user_profile.get("concern_type", "habit"))
 
     plant_map = {

@@ -78,7 +78,7 @@ def _resolve_path(path: str) -> Path:
     if cwd_path.exists():
         return cwd_path
 
-    return Path(__file__).resolve().parent / p
+    return Path(__file__).resolve().parent.parent / p
 
 
 def _safe_text(value: Any) -> str:
@@ -441,7 +441,7 @@ def _normalize_recommendation(
     return normalized
 
 
-def load_plants(path: str = "plants.json") -> list[dict[str, Any]]:
+def load_plants(path: str = "data/plants.json") -> list[dict[str, Any]]:
     file_path = _resolve_path(path)
     try:
         with file_path.open("r", encoding="utf-8") as f:
@@ -514,7 +514,7 @@ def build_recommendation_prompt(user_profile: dict[str, Any], plants: list[dict[
     )
 
 
-def recommend_plant(user_profile: dict[str, Any], plants_path: str = "plants.json") -> dict[str, Any]:
+def recommend_plant(user_profile: dict[str, Any], plants_path: str = "data/plants.json") -> dict[str, Any]:
     plants = load_plants(plants_path)
     fallback = fallback_recommendation(user_profile, plants)
 

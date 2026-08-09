@@ -29,7 +29,7 @@ try {
 
     $script:streamlitProcess = Start-Process `
         -FilePath "python" `
-        -ArgumentList @("-m", "streamlit", "run", "app.py") `
+        -ArgumentList @("-m", "streamlit", "run", "src/app.py") `
         -NoNewWindow `
         -PassThru
 

@@ -32,7 +32,7 @@ pip install -r requirements.txt
 일반 실행:
 
 ```bash
-streamlit run app.py
+streamlit run src/app.py
 ```
 
 Windows PowerShell 권장 실행:
@@ -41,7 +41,7 @@ Windows PowerShell 권장 실행:
 .\run_app.ps1
 ```
 
-`run_app.ps1`로 실행하면 터미널에 서버 종료 안내가 출력되고, `Ctrl+C` 입력 시 Streamlit 프로세스를 정리합니다. `streamlit run app.py`로 직접 실행해도 앱 시작 시 터미널에 `Ctrl+C` 종료 안내가 한 번 출력됩니다.
+`run_app.ps1`로 실행하면 터미널에 서버 종료 안내가 출력되고, `Ctrl+C` 입력 시 Streamlit 프로세스를 정리합니다. `streamlit run src/app.py`로 직접 실행해도 앱 시작 시 터미널에 `Ctrl+C` 종료 안내가 한 번 출력됩니다.
 
 ## 4) 환경 변수
 
@@ -67,11 +67,12 @@ OPENAI_MODEL="gemini-3.1-flash-lite"
 
 ```text
 mindplant/
-  app.py
-  ai.py
-  growth.py
-  storage.py
-  plants.json
+  src/
+    app.py
+    ai.py
+    growth.py
+    storage.py
+    test_growth.py
   run_app.ps1
   requirements.txt
   README.md
@@ -94,15 +95,16 @@ mindplant/
       sunflower_lv1.png ~ sunflower_lv5.png
   data/
     demo_user.json
+    plants.json
 ```
 
 파일 역할:
 
-- `app.py`: Streamlit 화면, 페이지 흐름, 목표 완료, 챗봇 UI, 식물 아바타 렌더링
-- `ai.py`: Gemini OpenAI 호환 API 호출, 식물 추천, 응원 메시지, 챗봇 답변 생성
-- `growth.py`: 완료 횟수에 따른 성장 단계 계산
-- `storage.py`: `data/demo_user.json` 기반 사용자 상태 저장/불러오기
-- `plants.json`: 식물 메타데이터와 추천 기준
+- `src/app.py`: Streamlit 화면, 페이지 흐름, 목표 완료, 챗봇 UI, 식물 아바타 렌더링
+- `src/ai.py`: Gemini OpenAI 호환 API 호출, 식물 추천, 응원 메시지, 챗봇 답변 생성
+- `src/growth.py`: 완료 횟수에 따른 성장 단계 계산
+- `src/storage.py`: `data/demo_user.json` 기반 사용자 상태 저장/불러오기
+- `data/plants.json`: 식물 메타데이터와 추천 기준
 - `run_app.ps1`: Windows PowerShell용 실행/종료 보조 스크립트
 - `design.md`: 현재 앱의 픽셀 UI, 색상, 타이포그래피, 컴포넌트 규칙을 정리한 디자인 재현 문서
 - `assets/plants/*.png`: 식물별 기본 및 성장 단계 도트 아바타 이미지
@@ -131,7 +133,7 @@ mindplant/
 
 1. GitHub repository를 만듭니다.
 2. `.env`, `__pycache__/`, `*.pyc`, 로컬 로그 파일은 커밋하지 않습니다.
-3. Streamlit Community Cloud에서 repo와 entrypoint `app.py`를 선택합니다.
+3. Streamlit Community Cloud에서 repo와 entrypoint `src/app.py`를 선택합니다.
 4. Advanced settings의 Secrets에 아래 값을 등록합니다.
 
 ```toml

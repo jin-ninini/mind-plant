@@ -26,7 +26,7 @@ def _resolve_path(path: str) -> Path:
     p = Path(path)
     if p.is_absolute():
         return p
-    return Path(__file__).resolve().parent / p
+    return Path(__file__).resolve().parent.parent / p
 
 
 def _deepcopy_default() -> dict[str, Any]:
