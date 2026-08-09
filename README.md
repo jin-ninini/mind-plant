@@ -134,7 +134,7 @@ mindplant/
 
 ## 6. License
 
-Copyright © 2026 Hyunjin.Hwang (@jin-ninini) All rights reserved.
+Copyright © 2026 Youth-AI Project Team 5. All rights reserved.
 
 This repository is provided for viewing and portfolio evaluation purposes only.
 
