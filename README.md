@@ -2,7 +2,9 @@
 
 청소년의 진로, 집중, 습관 고민에 맞는 AI 식물 친구를 추천하고, 작은 목표 실천으로 함께 성장하는 Streamlit 기반 MVP입니다.
 
-## https://mind-plant.streamlit.app/
+## App 
+
+https://mind-plant.streamlit.app/
 
 ## 1) 프로젝트 소개
 
