@@ -4,6 +4,9 @@
 !.env.example
 .streamlit/secrets.toml
 
+# Local user database (per-deployment runtime data)
+data/*.db
+
 # Python cache and build artifacts
 __pycache__/
 *.py[cod]
