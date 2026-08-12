@@ -1,17 +1,15 @@
-# MindPlant
+# 🌱MindPlant
+
 > 청소년의 진로, 집중, 습관 고민에 맞는 식물 친구를 추천하고, 작은 목표 실천을 통해 함께 성장하는 Streamlit 기반 MVP입니다.
 
-## Service
-https://mind-plant.streamlit.app/
+### https://mind-plant.streamlit.app/
 
 <br>
-
 
 ## Overview
 청소년들은 진로, 집중력, 목표 실천 습관 등 다양한 고민을 안고 있지만, 무겁고 딱딱한 상담 도구는 접근 장벽이 높습니다. MindPlant는 이런 고민을 게임처럼 가볍게 접근할 수 있도록, 사용자의 고민 유형과 성향 설문을 바탕으로 AI가 어울리는 식물 친구를 추천하고, 작은 목표를 꾸준히 실천할 때마다 식물이 성장하는 보상 구조를 통해 지속적인 동기를 부여하는 것을 목표로 기획되었습니다.
 
 <br>
-
 
 ## Approach
 * 사용한 데이터
@@ -26,12 +24,14 @@ https://mind-plant.streamlit.app/
   * SQLite 기반 사용자 상태 저장(`src/db.py`)과 Streamlit `session_state`를 통한 화면 간 상태 공유
 * 전체적인 접근 방식
   * 고민 선택 → 성향 설문 → AI 식물 친구 추천 → 오늘의 목표 실천 → 식물 성장 → 식물 친구와의 대화로 이어지는 단계별 사용자 흐름 설계
+  * 
 <br>
 
 ## Results
 * 고민 유형과 성향 설문을 조합한 AI 식물 친구 추천 및 API 실패 시 자연스러운 Fallback 응답 제공
 * 목표 완료 횟수에 따른 5단계 식물 성장(씨앗~꽃)과 단계별 아바타 이미지, 배경 테마 자동 전환 구현
 * 추천 성향, 최근 완료 목표를 반영한 식물 친구와의 실시간 대화 기능 구현
+
 <br>
 
 ## Tech Stack
@@ -44,6 +44,7 @@ https://mind-plant.streamlit.app/
 #### Database       ![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white)
 
 #### Development & Environment       ![Git](https://img.shields.io/badge/Git-F05032?style=flat-square&logo=git&logoColor=white)   ![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white)   ![VS Code](https://img.shields.io/badge/VS%20Code-007ACC?style=flat-square&logo=visualstudiocode&logoColor=white)
+
 <br>
 
 ## Getting Started
@@ -136,6 +137,7 @@ mindplant/
 | `data/demo_user.json` | 데모 사용자 데이터                  |
 | `assets/plants/`      | 식물 및 성장 단계 이미지              |
 | `design.md`           | 디자인 시스템 및 UI 가이드            |
+
 <br>
 
 ## License
