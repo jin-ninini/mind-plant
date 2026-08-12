@@ -11,6 +11,7 @@ from typing import Any, Callable
 import streamlit as st
 from dotenv import load_dotenv
 
+import db
 from growth import build_plant_state, get_growth_progress, get_growth_stage, get_next_stage_preview
 
 load_dotenv()
@@ -28,6 +29,7 @@ if os.environ.get("MINDPLANT_TERMINAL_HELP_SHOWN") != "1":
     os.environ["MINDPLANT_TERMINAL_HELP_SHOWN"] = "1"
 
 PLANTS_PATH = "data/plants.json"
+DB_PATH = "data/mindplant.db"
 AVATAR_DIR = Path(__file__).resolve().parent.parent / "assets" / "plants"
 
 MBTI_QUESTIONS: tuple[dict[str, str], ...] = (
@@ -842,10 +844,12 @@ def _render_chat_card(chat_log_html: str, trigger: int = 0) -> None:
 
 
 def _persist_state() -> None:
-    # 상태는 st.session_state에만 보관합니다(브라우저 세션마다 독립적).
-    # 과거에는 공용 파일(data/demo_user.json)에 저장해 모든 방문자가 같은 상태를
-    # 공유하는 문제가 있었기 때문에 파일 기반 저장을 사용하지 않습니다.
-    return
+    # 로그인한 사용자(이름)별로 DB(SQLite)에 저장해 다음 접속 시 이어서 볼 수 있게 합니다.
+    # 로그인 전에는 저장할 대상이 없으므로 아무 것도 하지 않습니다.
+    user_name = st.session_state.get("user_name", "")
+    if not user_name:
+        return
+    db.save_user_state(user_name, _collect_profile_for_storage(), path=DB_PATH)
 
 
 def _default_survey_answers() -> dict[str, int]:
@@ -905,13 +909,39 @@ def _reset_all_state() -> None:
     _reset_journey_state(next_page="start", clear_mbti=True)
 
 
-def _init_state() -> None:
-    if st.session_state.get("_initialized"):
-        return
+def _logout() -> None:
+    _reset_all_state()
+    st.session_state.user_name = ""
+    st.session_state.page = "login"
 
-    # 새 방문자는 항상 빈 기본값에서 시작합니다(다른 사용자의 상태를 불러오지 않음).
-    loaded: dict[str, Any] = {}
 
+def _collect_profile_for_storage() -> dict[str, Any]:
+    return {
+        "page": st.session_state.get("page", "start"),
+        "concern_type": st.session_state.get("concern_type", ""),
+        "custom_concern_text": st.session_state.get("custom_concern_text", ""),
+        "survey_answers": st.session_state.get("survey_answers", _default_survey_answers()),
+        "free_text": st.session_state.get("free_text", ""),
+        "recommendation": st.session_state.get("recommendation"),
+        "completed_count": st.session_state.get("completed_count", 0),
+        "today_goal": st.session_state.get("today_goal", ""),
+        "today_goal_options": st.session_state.get("today_goal_options", []),
+        "last_encouragement": st.session_state.get("last_encouragement", ""),
+        "pending_goal_text": st.session_state.get("pending_goal_text", ""),
+        "pending_reflection_text": st.session_state.get("pending_reflection_text", ""),
+        "pending_worry_text": st.session_state.get("pending_worry_text", ""),
+        "watering_progress": st.session_state.get("watering_progress", 0),
+        "watering_splash_visible": st.session_state.get("watering_splash_visible", False),
+        "watering_can_filled": st.session_state.get("watering_can_filled", False),
+        "watering_warning_message": st.session_state.get("watering_warning_message", ""),
+        "mbti_answers": st.session_state.get("mbti_answers", _default_mbti_answers()),
+        "mbti_type": st.session_state.get("mbti_type", ""),
+        "goal_history": st.session_state.get("goal_history", []),
+        "chat_history": st.session_state.get("chat_history", []),
+    }
+
+
+def _apply_profile_to_session(loaded: dict[str, Any]) -> None:
     st.session_state.page = loaded.get("page", "start")
     st.session_state.concern_type = loaded.get("concern_type", "")
     st.session_state.custom_concern_text = str(loaded.get("custom_concern_text", "") or "")
@@ -951,7 +981,19 @@ def _init_state() -> None:
 
     st.session_state.show_particle_burst = False
 
+
+def _init_state() -> None:
+    if st.session_state.get("_initialized"):
+        return
+
+    # 로그인 전에는 사용자를 특정할 수 없으므로 빈 기본값으로 시작하고,
+    # 첫 화면으로 이름 입력(로그인) 페이지를 보여줍니다.
+    st.session_state.user_name = ""
+    _apply_profile_to_session({})
+    st.session_state.page = "login"
+
     st.session_state._initialized = True
+
 
 
 _init_state()
@@ -1724,8 +1766,44 @@ st.markdown(
 if not ai_available:
     st.warning("ai.py import에 실패해 임시 fallback 추천 모드로 실행 중입니다.")
 
+if st.session_state.page != "login" and st.session_state.get("user_name"):
+    with st.sidebar:
+        st.markdown(f"**{html.escape(st.session_state.user_name)}**님 환영해요 🌱")
+        if st.button("다른 이름으로 로그인", use_container_width=True):
+            _logout()
+            st.rerun()
 
-if st.session_state.page == "start":
+
+if st.session_state.page == "login":
+    st.markdown("<div class='hero-box'>", unsafe_allow_html=True)
+    st.markdown("<div class='eyebrow'>PRESS START · PIXEL PLANT ADVENTURE</div>", unsafe_allow_html=True)
+    st.title("MindPlant")
+    st.subheader("이름을 입력하고 나만의 식물 친구를 만나보세요")
+    st.write("입력한 이름으로 진행 상황이 저장돼요. 같은 이름으로 다시 접속하면 이어서 시작할 수 있어요.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    with st.form("login_form"):
+        name_input = st.text_input("이름", max_chars=20, placeholder="예: 홍길동")
+        submitted = st.form_submit_button("입장하기", use_container_width=True)
+
+    if submitted:
+        normalized = db.normalize_name(name_input)
+        if not normalized:
+            st.error("이름을 입력해주세요.")
+        else:
+            existing = db.load_user_state(normalized, path=DB_PATH)
+            st.session_state.user_name = normalized
+            if existing:
+                _apply_profile_to_session(existing)
+                if st.session_state.page == "login":
+                    st.session_state.page = "start"
+            else:
+                st.session_state.page = "start"
+            _persist_state()
+            st.rerun()
+
+
+elif st.session_state.page == "start":
     if not st.session_state.get("start_showcase_plant"):
         st.session_state.start_showcase_plant = _pick_random_showcase_plant_id(level=5)
     st.markdown("<div class='hero-box'>", unsafe_allow_html=True)
