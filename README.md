@@ -1,5 +1,5 @@
 # 📌 MindPlant
-> 청소년의 진로, 집중, 습관 고민에 맞는 AI 식물 친구를 추천하고, 작은 목표 실천을 통해 함께 성장하는 Streamlit 기반 MVP입니다.
+> 청소년의 진로, 집중, 습관 고민에 맞는 식물 친구를 추천하고, 작은 목표 실천을 통해 함께 성장하는 Streamlit 기반 MVP입니다.
 
 <br>
 
@@ -60,10 +60,6 @@ https://mind-plant.streamlit.app/
 ### Database
 
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white)
-
-### Image Processing
-
-![Pillow](https://img.shields.io/badge/Pillow-3776AB?style=flat-square&logo=python&logoColor=white)
 
 ### Development & Environment
 
