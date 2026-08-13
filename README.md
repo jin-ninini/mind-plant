@@ -93,13 +93,6 @@ VISION_MODEL=gpt-5.4
 mindplant/
 ├── assets/
 │   └── plants/
-│       ├── basil.png
-│       ├── cactus.png
-│       ├── lavender.png
-│       ├── mint.png
-│       ├── monstera.png
-│       ├── sprout.png
-│       ├── sunflower.png
 │       ├── basil_lv1.png ~ basil_lv5.png
 │       ├── cactus_lv1.png ~ cactus_lv5.png
 │       ├── lavender_lv1.png ~ lavender_lv5.png
