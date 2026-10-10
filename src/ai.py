@@ -111,12 +111,7 @@ def _log_ai_error(context: str, exc: Exception) -> None:
     print(f"[MindPlant AI] {context} failed: {type(exc).__name__}: {exc}", file=sys.stderr)
 
 
-def _chat_completion_text(
-    messages: list[dict[str, str]],
-    *,
-    temperature: float = 0.7,
-    max_tokens: int = 512,
-) -> str:
+def _make_client() -> tuple[Any, str]:
     from openai import OpenAI
 
     api_key = _get_api_key()
@@ -129,6 +124,16 @@ def _chat_completion_text(
         default_headers={"api-key": api_key} if is_apim else None,
         timeout=20.0,
     )
+    return client, model
+
+
+def _chat_completion_text(
+    messages: list[dict[str, str]],
+    *,
+    temperature: float = 0.7,
+    max_tokens: int = 512,
+) -> str:
+    client, model = _make_client()
     response = client.chat.completions.create(
         model=model,
         messages=messages,

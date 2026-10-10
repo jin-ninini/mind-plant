@@ -12,6 +12,11 @@ import streamlit as st
 from dotenv import load_dotenv
 
 import db
+
+try:
+    from agent import run_companion_agent
+except Exception:
+    run_companion_agent = None
 from growth import build_plant_state, get_growth_progress, get_growth_stage, get_next_stage_preview
 
 load_dotenv()
@@ -900,9 +905,11 @@ def _reset_journey_state(next_page: str = "concern", clear_mbti: bool = False) -
     st.session_state.watering_splash_visible = False
     st.session_state.watering_can_filled = False
     st.session_state.watering_warning_message = ""
+    st.session_state.last_agent_actions = []
     if clear_mbti:
         st.session_state.mbti_answers = _default_mbti_answers()
         st.session_state.mbti_type = ""
+        st.session_state.memory_notes = []
 
 
 def _reset_all_state() -> None:
@@ -938,6 +945,7 @@ def _collect_profile_for_storage() -> dict[str, Any]:
         "mbti_type": st.session_state.get("mbti_type", ""),
         "goal_history": st.session_state.get("goal_history", []),
         "chat_history": st.session_state.get("chat_history", []),
+        "memory_notes": st.session_state.get("memory_notes", []),
     }
 
 
@@ -965,6 +973,14 @@ def _apply_profile_to_session(loaded: dict[str, Any]) -> None:
 
     loaded_goal_history = loaded.get("goal_history", [])
     st.session_state.goal_history = loaded_goal_history if isinstance(loaded_goal_history, list) else []
+
+    loaded_memory_notes = loaded.get("memory_notes", [])
+    st.session_state.memory_notes = (
+        [str(note).strip() for note in loaded_memory_notes if str(note).strip()]
+        if isinstance(loaded_memory_notes, list)
+        else []
+    )
+    st.session_state.last_agent_actions = []
 
     loaded_chat_history = loaded.get("chat_history", [])
     if isinstance(loaded_chat_history, list):
@@ -2235,9 +2251,34 @@ elif st.session_state.page == "home":
             send = st.form_submit_button("보내기", use_container_width=True)
 
         if send and chat_input.strip():
-            st.session_state.chat_history.append({"role": "user", "content": chat_input.strip()})
+            # 대화 맥락에는 방금 입력한 메시지를 넣기 전의 기록을 넘깁니다.
+            agent_result = None
+            if run_companion_agent is not None:
+                agent_result = run_companion_agent(
+                    chat_input.strip(),
+                    recommendation=recommendation,
+                    concern_type=st.session_state.concern_type,
+                    survey_answers=st.session_state.survey_answers,
+                    completed_count=completed_count,
+                    goal_history=st.session_state.goal_history,
+                    chat_history=st.session_state.chat_history,
+                    goal_options=st.session_state.today_goal_options,
+                    today_goal=st.session_state.today_goal,
+                    memory_notes=st.session_state.memory_notes,
+                )
 
-            if _wants_goal_added(chat_input):
+            st.session_state.chat_history.append({"role": "user", "content": chat_input.strip()})
+            st.session_state.last_agent_actions = []
+
+            if agent_result is not None:
+                reply = agent_result.reply
+                st.session_state.today_goal_options = agent_result.goal_options
+                st.session_state.today_goal = agent_result.today_goal
+                if agent_result.today_goal in agent_result.goal_options:
+                    st.session_state.today_goal_radio = agent_result.today_goal
+                st.session_state.memory_notes = agent_result.memory_notes
+                st.session_state.last_agent_actions = agent_result.actions
+            elif _wants_goal_added(chat_input):
                 new_goals = generate_goal_options_fn(
                     chat_input,
                     recommendation,
@@ -2266,6 +2307,17 @@ elif st.session_state.page == "home":
             st.session_state.chat_history = st.session_state.chat_history[-30:]
             _persist_state()
             st.rerun()
+
+        if st.session_state.get("last_agent_actions"):
+            st.caption("🔧 식물 친구가 한 일: " + " → ".join(st.session_state.last_agent_actions))
+
+        memory_notes = st.session_state.get("memory_notes") or []
+        with st.expander(f"🧠 식물 친구의 기억 ({len(memory_notes)})"):
+            if memory_notes:
+                for note in memory_notes:
+                    st.markdown(f"- {note}")
+            else:
+                st.caption("대화하면서 기억할 만한 이야기를 저장해요.")
 
     if growth_stage["next_target"] is not None:
         left = int(growth_stage["next_target"]) - completed_count
