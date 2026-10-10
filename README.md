@@ -3,6 +3,7 @@
 > 청소년의 고민에 맞는 식물 친구를 추천하고, 도구를 직접 쓰는 AI 에이전트가 작은 목표의 계획부터 실천, 회고까지 함께하는 Streamlit 기반 자기관리 서비스
 
 **Service**: https://mind-plant.streamlit.app/
+(API KEY 만료로 인해 규칙 기반 Fallback 으로 전체 흐름 체험 제공)
 
 <br>
 
