@@ -4,7 +4,7 @@ import json
 import unittest
 from types import SimpleNamespace
 
-from agent import AgentState, execute_tool, run_companion_agent
+from agent import CRISIS_REPLY, MAX_STEPS, AgentState, execute_tool, run_checkin_agent, run_companion_agent
 
 
 def _tool_call(call_id: str, name: str, arguments: dict) -> SimpleNamespace:
@@ -20,9 +20,11 @@ class ScriptedCompleter:
     def __init__(self, responses: list[SimpleNamespace]) -> None:
         self.responses = list(responses)
         self.calls: list[list[dict]] = []
+        self.tools_seen: list[list[str]] = []
 
     def __call__(self, messages, tools):
         self.calls.append(list(messages))
+        self.tools_seen.append([t["function"]["name"] for t in tools or []])
         return self.responses.pop(0)
 
 
@@ -80,10 +82,11 @@ class AgentLoopTests(unittest.TestCase):
 
     def test_step_limit_forces_final_answer_without_tools(self) -> None:
         looping = SimpleNamespace(content=None, tool_calls=[_tool_call("c", "get_progress", {})])
-        completer = ScriptedCompleter([looping] * 4 + [SimpleNamespace(content="정리해서 알려줄게.", tool_calls=None)])
+        completer = ScriptedCompleter([looping] * MAX_STEPS + [SimpleNamespace(content="정리해서 알려줄게.", tool_calls=None)])
         result = _run(completer)
         self.assertEqual(result.reply, "정리해서 알려줄게.")
-        self.assertEqual(len(completer.calls), 5)
+        self.assertEqual(len(completer.calls), MAX_STEPS + 1)
+        self.assertEqual(result.trace[-2]["type"], "limit")
 
     def test_error_returns_none_for_fallback(self) -> None:
         def broken(messages, tools):
@@ -94,6 +97,90 @@ class AgentLoopTests(unittest.TestCase):
     def test_empty_reply_returns_none(self) -> None:
         completer = ScriptedCompleter([SimpleNamespace(content="  ", tool_calls=None)])
         self.assertIsNone(_run(completer))
+
+    def test_trace_records_tool_steps_and_reply(self) -> None:
+        completer = ScriptedCompleter(
+            [
+                SimpleNamespace(content="먼저 진행 상황을 볼게.", tool_calls=[_tool_call("c1", "get_progress", {})]),
+                SimpleNamespace(content="벌써 2번이나 해냈네!", tool_calls=None),
+            ]
+        )
+        result = _run(completer)
+        self.assertEqual([t["type"] for t in result.trace], ["thought", "tool", "reply"])
+        self.assertEqual(result.trace[1]["name"], "get_progress")
+        self.assertTrue(result.trace[1]["ok"])
+
+    def test_goal_completion_is_handed_to_app_not_counted(self) -> None:
+        completer = ScriptedCompleter(
+            [
+                SimpleNamespace(content=None, tool_calls=[_tool_call("c1", "start_goal_completion", {"goal": "공식 5개 써보기"})]),
+                SimpleNamespace(content="와, 해냈구나! 소감 들려줘.", tool_calls=None),
+            ]
+        )
+        result = _run(completer, goal_options=["공식 5개 써보기"], today_goal="")
+        self.assertEqual(result.pending_completion, "공식 5개 써보기")
+        self.assertEqual(result.today_goal, "공식 5개 써보기")
+
+
+class GuardrailTests(unittest.TestCase):
+    def test_crisis_text_skips_llm(self) -> None:
+        def must_not_call(messages, tools):
+            raise AssertionError("위기 표현에는 LLM을 호출하면 안 돼요")
+
+        result = run_companion_agent(
+            "요즘 너무 힘들어서 죽고 싶어",
+            recommendation={},
+            concern_type="focus",
+            survey_answers={},
+            completed_count=0,
+            goal_history=[],
+            chat_history=[],
+            goal_options=[],
+            today_goal="",
+            memory_notes=[],
+            complete=must_not_call,
+        )
+        self.assertEqual(result.reply, CRISIS_REPLY)
+        self.assertEqual(result.guardrail, "crisis")
+        self.assertIn("1388", result.reply)
+
+    def test_ordinary_worry_is_not_flagged(self) -> None:
+        completer = ScriptedCompleter([SimpleNamespace(content="그럴 수 있어.", tool_calls=None)])
+        result = _run(completer)
+        self.assertEqual(result.guardrail, "")
+
+    def test_checkin_blocks_state_changing_tools(self) -> None:
+        completer = ScriptedCompleter(
+            [
+                SimpleNamespace(
+                    content=None,
+                    tool_calls=[
+                        _tool_call("c1", "get_goal_history", {}),
+                        _tool_call("c2", "set_today_goals", {"goals": ["몰래 넣은 목표"], "mode": "replace"}),
+                    ],
+                ),
+                SimpleNamespace(content="어제 수학 시험은 어땠어?", tool_calls=None),
+            ]
+        )
+        result = run_checkin_agent(
+            recommendation={"plant_name": "스투키"},
+            concern_type="focus",
+            survey_answers={},
+            completed_count=1,
+            goal_history=["공식 5개 써보기"],
+            chat_history=[],
+            goal_options=["A"],
+            today_goal="A",
+            memory_notes=["(2026-10-09) 내일 수학 시험이 있음"],
+            today="2026-10-10",
+            complete=completer,
+        )
+        self.assertEqual(result.reply, "어제 수학 시험은 어땠어?")
+        self.assertEqual(result.goal_options, ["A"])
+        blocked = [t for t in result.trace if t.get("name") == "set_today_goals"][0]
+        self.assertFalse(blocked["ok"])
+        # 체크인에는 조회 도구만 전달되어야 합니다.
+        self.assertEqual(sorted(completer.tools_seen[0]), ["get_goal_history", "get_progress"])
 
 
 class ToolTests(unittest.TestCase):
@@ -117,6 +204,53 @@ class ToolTests(unittest.TestCase):
         result = execute_tool(state, "select_today_goal", json.dumps({"goal": "Z"}))
         self.assertFalse(result["ok"])
         self.assertEqual(state.today_goal, "A")
+
+    def test_break_down_goal_replaces_in_place(self) -> None:
+        state = self._state()
+        result = execute_tool(state, "break_down_goal", json.dumps({"goal": "A", "steps": ["A-1", "A-2"]}))
+        self.assertTrue(result["ok"])
+        self.assertEqual(state.goal_options, ["A-1", "A-2", "B"])
+        self.assertEqual(state.today_goal, "A-1")
+
+    def test_break_down_goal_needs_two_steps(self) -> None:
+        state = self._state()
+        self.assertFalse(execute_tool(state, "break_down_goal", json.dumps({"goal": "A", "steps": ["A-1"]}))["ok"])
+        self.assertEqual(state.goal_options, ["A", "B"])
+
+    def test_completion_rejects_unknown_goal(self) -> None:
+        state = self._state()
+        self.assertFalse(execute_tool(state, "start_goal_completion", json.dumps({"goal": "Z"}))["ok"])
+        self.assertEqual(state.pending_completion, "")
+
+    def test_remember_adds_date_and_blocks_pii(self) -> None:
+        state = self._state()
+        state.today = "2026-10-10"
+        execute_tool(state, "remember", json.dumps({"note": "아침형 인간"}))
+        self.assertEqual(state.memory_notes, ["(2026-10-10) 아침형 인간"])
+        result = execute_tool(state, "remember", json.dumps({"note": "엄마 번호는 010-1234-5678"}))
+        self.assertFalse(result["ok"])
+        self.assertEqual(len(state.memory_notes), 1)
+
+    def test_remember_rejects_near_duplicate(self) -> None:
+        state = self._state()
+        state.memory_notes = ["(2026-10-10) 밤에 집중이 잘 되는 편"]
+        result = execute_tool(state, "remember", json.dumps({"note": "사용자는 밤에 집중이 잘 되는 편이다."}))
+        self.assertFalse(result["ok"])
+        self.assertEqual(len(state.memory_notes), 1)
+
+    def test_forget_memory_by_text(self) -> None:
+        state = self._state()
+        state.memory_notes = ["(2026-10-09) 수학 시험이 있음", "(2026-10-09) 아침형 인간", "영어를 좋아함"]
+        # 날짜 접두어 없이 넘겨도 같은 기억을 찾아야 합니다.
+        self.assertTrue(execute_tool(state, "forget_memory", json.dumps({"note": "아침형 인간"}))["ok"])
+        self.assertEqual(state.memory_notes, ["(2026-10-09) 수학 시험이 있음", "영어를 좋아함"])
+        self.assertFalse(execute_tool(state, "forget_memory", json.dumps({"note": "없는 기억"}))["ok"])
+
+    def test_forget_memory_rejects_ambiguous_match(self) -> None:
+        state = self._state()
+        state.memory_notes = ["수학 시험 월요일", "수학 시험 범위 3단원"]
+        self.assertFalse(execute_tool(state, "forget_memory", json.dumps({"note": "수학 시험"}))["ok"])
+        self.assertEqual(len(state.memory_notes), 2)
 
     def test_unknown_tool_and_bad_json(self) -> None:
         self.assertFalse(execute_tool(self._state(), "delete_everything", "{}")["ok"])

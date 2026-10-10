@@ -3,7 +3,9 @@ from __future__ import annotations
 import html
 import io
 import os
+import json
 import random
+from datetime import date
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable
@@ -14,8 +16,9 @@ from dotenv import load_dotenv
 import db
 
 try:
-    from agent import run_companion_agent
+    from agent import run_checkin_agent, run_companion_agent
 except Exception:
+    run_checkin_agent = None
     run_companion_agent = None
 from growth import build_plant_state, get_growth_progress, get_growth_stage, get_next_stage_preview
 
@@ -680,6 +683,42 @@ def _render_exp_meter(progress: dict[str, Any]) -> None:
     )
 
 
+TOOL_LABELS: dict[str, str] = {
+    "get_progress": "진행 상황 조회",
+    "get_goal_history": "완료 기록 조회",
+    "set_today_goals": "오늘의 목표 설정",
+    "select_today_goal": "시작할 목표 선택",
+    "break_down_goal": "목표 잘게 나누기",
+    "start_goal_completion": "목표 완료 처리",
+    "remember": "기억 저장",
+    "forget_memory": "기억 삭제",
+}
+
+
+def _render_agent_trace(trace: list[dict[str, Any]]) -> None:
+    # 에이전트가 어떤 순서로 생각하고 도구를 썼는지 단계별로 보여줍니다.
+    for entry in trace:
+        kind = entry.get("type")
+        if kind == "guardrail":
+            st.markdown(f"🛡️ **안전 가드레일** · {entry.get('content', '')}")
+        elif kind == "thought":
+            st.markdown(f"💭 **Step {entry.get('step')} 생각** · {entry.get('content', '')}")
+        elif kind == "tool":
+            name = str(entry.get("name", ""))
+            mark = "✅" if entry.get("ok") else "⚠️"
+            st.markdown(f"{mark} **Step {entry.get('step')} 도구 호출** · `{name}` ({TOOL_LABELS.get(name, name)})")
+            st.code(
+                "입력: " + json.dumps(entry.get("args"), ensure_ascii=False)
+                + "\n결과: " + json.dumps(entry.get("result"), ensure_ascii=False),
+                language="json",
+                wrap_lines=True,
+            )
+        elif kind == "limit":
+            st.markdown(f"⏱️ **단계 제한({entry.get('step')}회) 도달** · 도구 없이 최종 답변 생성")
+        elif kind == "reply":
+            st.markdown("💬 **최종 답변 생성**")
+
+
 def _commit_goal_completion(recommendation: dict[str, Any]) -> None:
     pending_goal = str(st.session_state.pending_goal_text or "").strip()
     if not pending_goal:
@@ -906,6 +945,7 @@ def _reset_journey_state(next_page: str = "concern", clear_mbti: bool = False) -
     st.session_state.watering_can_filled = False
     st.session_state.watering_warning_message = ""
     st.session_state.last_agent_actions = []
+    st.session_state.last_agent_trace = []
     if clear_mbti:
         st.session_state.mbti_answers = _default_mbti_answers()
         st.session_state.mbti_type = ""
@@ -946,6 +986,7 @@ def _collect_profile_for_storage() -> dict[str, Any]:
         "goal_history": st.session_state.get("goal_history", []),
         "chat_history": st.session_state.get("chat_history", []),
         "memory_notes": st.session_state.get("memory_notes", []),
+        "last_visit_date": st.session_state.get("last_visit_date", ""),
     }
 
 
@@ -981,6 +1022,8 @@ def _apply_profile_to_session(loaded: dict[str, Any]) -> None:
         else []
     )
     st.session_state.last_agent_actions = []
+    st.session_state.last_agent_trace = []
+    st.session_state.last_visit_date = str(loaded.get("last_visit_date", "") or "")
 
     loaded_chat_history = loaded.get("chat_history", [])
     if isinstance(loaded_chat_history, list):
@@ -2208,9 +2251,37 @@ elif st.session_state.page == "home":
             f"안녕, 나는 {plant_state['plant_name']}이야. "
             f"너의 {_concern_label(st.session_state.concern_type, st.session_state.custom_concern_text)} 흐름을 기억하고 있어. "
             "오늘 하고 싶은 일이나 해야 할 일이 있으면 편하게 말해줄래? "
-            "그다음 '오늘의 목표에 넣어줘'라고 말해주면, 그 이야기를 바탕으로 딱 맞는 작은 목표로 나눠서 오늘의 목표에 넣어줄게."
+            "그다음 '오늘의 목표에 넣어줘'라고 말해주면, 그 이야기를 바탕으로 딱 맞는 작은 목표로 나눠서 오늘의 목표에 넣어줄게. "
+            "목표를 끝내면 '다 했어'라고 알려줘!"
         )
         st.session_state.chat_history = [{"role": "assistant", "content": opening}]
+        _persist_state()
+
+    # 그날 처음 들어온 재방문 사용자에게는 에이전트가 기억과 진행 상황을 보고 먼저 말을 겁니다.
+    today_str = date.today().isoformat()
+    if st.session_state.get("last_visit_date") != today_str:
+        last_visit = str(st.session_state.get("last_visit_date") or "")
+        st.session_state.last_visit_date = today_str
+        if last_visit and run_checkin_agent is not None:
+            with st.spinner(f"{plant_state['plant_name']}가 지난 이야기를 떠올리는 중..."):
+                checkin_result = run_checkin_agent(
+                    recommendation=recommendation,
+                    concern_type=st.session_state.concern_type,
+                    survey_answers=st.session_state.survey_answers,
+                    completed_count=completed_count,
+                    goal_history=st.session_state.goal_history,
+                    chat_history=st.session_state.chat_history,
+                    goal_options=st.session_state.today_goal_options,
+                    today_goal=st.session_state.today_goal,
+                    memory_notes=st.session_state.memory_notes,
+                    today=today_str,
+                    last_visit=last_visit,
+                )
+            if checkin_result is not None:
+                st.session_state.chat_history.append({"role": "assistant", "content": checkin_result.reply})
+                st.session_state.chat_history = st.session_state.chat_history[-30:]
+                st.session_state.last_agent_actions = ["먼저 말 걸기"] + checkin_result.actions
+                st.session_state.last_agent_trace = checkin_result.trace
         _persist_state()
 
     left_col, right_col = st.columns([1.28, 0.92], gap="medium")
@@ -2265,10 +2336,12 @@ elif st.session_state.page == "home":
                     goal_options=st.session_state.today_goal_options,
                     today_goal=st.session_state.today_goal,
                     memory_notes=st.session_state.memory_notes,
+                    today=date.today().isoformat(),
                 )
 
             st.session_state.chat_history.append({"role": "user", "content": chat_input.strip()})
             st.session_state.last_agent_actions = []
+            st.session_state.last_agent_trace = []
 
             if agent_result is not None:
                 reply = agent_result.reply
@@ -2278,6 +2351,11 @@ elif st.session_state.page == "home":
                     st.session_state.today_goal_radio = agent_result.today_goal
                 st.session_state.memory_notes = agent_result.memory_notes
                 st.session_state.last_agent_actions = agent_result.actions
+                st.session_state.last_agent_trace = agent_result.trace
+                if agent_result.pending_completion:
+                    # 완료 처리는 에이전트가 직접 하지 않고, 기존 마무리 대화 → 물주기 흐름으로 넘깁니다.
+                    st.session_state.pending_goal_text = agent_result.pending_completion
+                    st.session_state.page = "goal_reflection"
             elif _wants_goal_added(chat_input):
                 new_goals = generate_goal_options_fn(
                     chat_input,
@@ -2310,6 +2388,11 @@ elif st.session_state.page == "home":
 
         if st.session_state.get("last_agent_actions"):
             st.caption("🔧 식물 친구가 한 일: " + " → ".join(st.session_state.last_agent_actions))
+
+        agent_trace = st.session_state.get("last_agent_trace") or []
+        if agent_trace:
+            with st.expander(f"🔍 에이전트 실행 과정 ({len(agent_trace)}단계)"):
+                _render_agent_trace(agent_trace)
 
         memory_notes = st.session_state.get("memory_notes") or []
         with st.expander(f"🧠 식물 친구의 기억 ({len(memory_notes)})"):
